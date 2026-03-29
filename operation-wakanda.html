@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <meta name="description" content="Operation Wakanda - Cybersecurity investigation project by Nevo Ben Ami. Threat hunting and incident response simulation.">
+  <meta property="og:title" content="Operation Wakanda - Nevo Ben Ami">
+  <meta property="og:description" content="Cybersecurity investigation project featuring threat hunting and incident response simulation.">
+  <meta property="og:image" content="nevo.png">
+  <meta property="og:type" content="website">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Operation Wakanda - Nevo Ben Ami</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .proj-badge{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);color:#f59e0b}
+    .proj-tag{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);color:#f59e0b}
+    .proj-hl-border{border-left:2px solid rgba(245,158,11,0.2)}
+    .proj-hl-title{color:#f59e0b}
+    .proj-dot{background:#f59e0b}
+  </style>
+</head>
+<body class="page-wakanda">
+
+<canvas id="particle-canvas"></canvas>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">NB</a>
+  <button class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="navLinks">
+    <a href="index.html" data-mobile="Home"><span class="nav-text">Home</span></a>
+    <a href="falcon-x.html" data-mobile="Falcon X SIEM"><span class="nav-text">Falcon X SIEM</span></a>
+    <a href="sentinelview.html" data-mobile="SentinelView"><span class="nav-text">SentinelView</span></a>
+    <a href="operation-wakanda.html" class="active" data-mobile="Operation Wakanda"><span class="nav-text">Operation Wakanda</span></a>
+    <a href="phishguard.html" data-mobile="PhishGuard"><span class="nav-text">PhishGuard</span></a>
+    <a href="sql-injection.html" data-mobile="SQL Injection"><span class="nav-text">SQL Injection</span></a>
+    <a href="resume.html" data-mobile="&#128196; Resume"><span class="nav-text">&#128196; Resume</span></a>
+  </div>
+  <div class="nav-spacer"></div>
+</nav>
+
+<div class="page-wrapper">
+
+  <section class="proj-hero-section">
+    <div class="container">
+      <div class="proj-grid">
+        <div class="proj-left fade-in">
+          <span class="proj-badge">Red Team Simulation</span>
+          <h1 class="project-title">Operation Wakanda</h1>
+          <p class="proj-desc">Interactive cloud attack simulation built around branching paths, red team decision-making, and offensive exploration.</p>
+          <div class="proj-tags">
+            <span class="proj-tag">Red Team</span>
+            <span class="proj-tag">OSINT</span>
+            <span class="proj-tag">Penetration Testing</span>
+            <span class="proj-tag">HTML/CSS/JS</span>
+          </div>
+        </div>
+        <div class="proj-right fade-in">
+          <div class="proj-hl-border">
+            <span class="proj-hl-title">KEY HIGHLIGHTS</span>
+            <ul class="proj-hl-list">
+              <li><span class="proj-dot"></span>Two operative roles with distinct narrative voices</li>
+              <li><span class="proj-dot"></span>7 branching investigation paths with dead ends</li>
+              <li><span class="proj-dot"></span>Assessment rating based on paths explored</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="demo-section fade-in">
+    <hr class="demo-divider">
+    <p class="demo-label">Live Demo</p>
+    <div class="demo-wrapper demo-wrapper-wakanda">
+      <iframe class="demo-frame" src="../Operation Wakanda/index.html" title="Operation Wakanda Demo" loading="lazy"></iframe>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>Nevo Ben Ami - Security Analyst Portfolio</p>
+  </footer>
+
+</div>
+
+<script>
+/* Force scroll to top - prevent iframe from hijacking scroll position */
+if(window.location.hash) window.location.hash='';
+(function() {
+  function forceTop() {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }
+
+  /* Run immediately */
+  forceTop();
+
+  /* Run on DOMContentLoaded */
+  document.addEventListener('DOMContentLoaded', forceTop);
+
+  /* Run on full page load */
+  window.addEventListener('load', function() {
+    forceTop();
+    /* Extra safety passes after load */
+    setTimeout(forceTop, 50);
+    setTimeout(forceTop, 150);
+    setTimeout(forceTop, 400);
+    setTimeout(forceTop, 800);
+  });
+
+  /* Run every time the iframe src loads */
+  document.addEventListener('DOMContentLoaded', function() {
+    var iframe = document.querySelector('.demo-frame');
+    if (iframe) {
+      iframe.addEventListener('load', function() {
+        forceTop();
+        setTimeout(forceTop, 50);
+        setTimeout(forceTop, 200);
+      });
+    }
+  });
+
+  /* Override any programmatic scroll attempts */
+  var scrollLock = true;
+  window.addEventListener('load', function() {
+    setTimeout(function() { scrollLock = false; }, 1000);
+  });
+  window.addEventListener('scroll', function() {
+    if (scrollLock) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, { passive: false });
+})();
+(function(){var c=document.getElementById('particle-canvas'),x=c.getContext('2d'),p=[];function r(){c.width=window.innerWidth;c.height=window.innerHeight}r();window.addEventListener('resize',r);function P(){this.x=Math.random()*c.width;this.y=Math.random()*c.height;this.vx=(Math.random()-0.5)*0.5;this.vy=(Math.random()-0.5)*0.5;this.radius=Math.random()*2+1}P.prototype.update=function(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>c.width)this.vx*=-1;if(this.y<0||this.y>c.height)this.vy*=-1};P.prototype.draw=function(){x.beginPath();x.arc(this.x,this.y,this.radius,0,Math.PI*2);x.fillStyle='rgba(59,130,246,0.5)';x.fill()};for(var i=0;i<80;i++)p.push(new P());function a(){x.clearRect(0,0,c.width,c.height);p.forEach(function(q){q.update();q.draw()});for(var i=0;i<p.length;i++)for(var j=i+1;j<p.length;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<150){x.beginPath();x.moveTo(p[i].x,p[i].y);x.lineTo(p[j].x,p[j].y);x.strokeStyle='rgba(59,130,246,'+(1-d/150)*0.15+')';x.lineWidth=0.5;x.stroke()}}requestAnimationFrame(a)}a()})();
+document.addEventListener('mousemove',function(e){var g=document.getElementById('cursorGlow');g.style.left=e.clientX+'px';g.style.top=e.clientY+'px'});
+(function(){var o=new IntersectionObserver(function(e){e.forEach(function(en){if(en.isIntersecting)en.target.classList.add('visible')})},{threshold:0.1});document.querySelectorAll('.fade-in').forEach(function(el){o.observe(el)})})();
+</script>
+
+<script>
+document.querySelectorAll('.nav-links a').forEach(function(link) {
+  link.addEventListener('click', function(e) {
+    var href = this.getAttribute('href');
+    if (href && !href.startsWith('#') && !href.startsWith('mailto')) {
+      e.preventDefault();
+      document.body.style.transition = 'opacity 0.3s ease';
+      document.body.style.opacity = '0';
+      setTimeout(function() { window.location.href = href; }, 300);
+    }
+  });
+});
+</script>
+
+<script>
+window.addEventListener('load', function() {
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      var active = document.querySelector('.nav-links a.active');
+      var navLinks = document.getElementById('navLinks');
+      if (active && navLinks) {
+        var activeRect = active.getBoundingClientRect();
+        var navRect = navLinks.getBoundingClientRect();
+        var offset = activeRect.left - navRect.left - (navRect.width / 2) + (activeRect.width / 2);
+        navLinks.scrollLeft += offset;
+      }
+    });
+  });
+});
+</script>
+
+<script>
+(function() {
+  var navbar = document.querySelector('.navbar');
+  var lastScrollY = window.scrollY;
+  var ticking = false;
+
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      window.requestAnimationFrame(function() {
+        var currentScrollY = window.scrollY;
+        if (currentScrollY <= 10) {
+          navbar.style.transform = 'translateY(0)';
+        } else if (currentScrollY < lastScrollY) {
+          navbar.style.transform = 'translateY(0)';
+        } else {
+          navbar.style.transform = 'translateY(-100%)';
+        }
+        lastScrollY = currentScrollY;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
