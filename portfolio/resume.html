@@ -200,5 +200,31 @@ window.addEventListener('load', function() {
 });
 </script>
 
+<script>
+(function() {
+  var navbar = document.querySelector('.navbar');
+  var lastScrollY = window.scrollY;
+  var ticking = false;
+
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      window.requestAnimationFrame(function() {
+        var currentScrollY = window.scrollY;
+        if (currentScrollY <= 10) {
+          navbar.style.transform = 'translateY(0)';
+        } else if (currentScrollY < lastScrollY) {
+          navbar.style.transform = 'translateY(0)';
+        } else {
+          navbar.style.transform = 'translateY(-100%)';
+        }
+        lastScrollY = currentScrollY;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+})();
+</script>
+
 </body>
 </html>

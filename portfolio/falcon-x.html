@@ -50,7 +50,7 @@
         <div class="proj-left fade-in">
           <span class="proj-badge">B.Sc. Final Project - Grade 98/100</span>
           <h1 class="project-title">Falcon X SIEM</h1>
-          <p class="proj-desc">Interactive SIEM platform built as a B.Sc. final project. Transforms a passive NOC tool into a full SOC platform with real-time triage, correlation engine, and automated playbooks</p>
+          <p class="proj-desc">Next-generation SIEM platform built to centralize visibility, correlate alerts, and support investigation workflows.</p>
           <div class="proj-tags">
             <span class="proj-tag">SIEM</span>
             <span class="proj-tag">UEBA</span>
@@ -125,6 +125,32 @@ window.addEventListener('load', function() {
     });
   });
 });
+</script>
+
+<script>
+(function() {
+  var navbar = document.querySelector('.navbar');
+  var lastScrollY = window.scrollY;
+  var ticking = false;
+
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      window.requestAnimationFrame(function() {
+        var currentScrollY = window.scrollY;
+        if (currentScrollY <= 10) {
+          navbar.style.transform = 'translateY(0)';
+        } else if (currentScrollY < lastScrollY) {
+          navbar.style.transform = 'translateY(0)';
+        } else {
+          navbar.style.transform = 'translateY(-100%)';
+        }
+        lastScrollY = currentScrollY;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+})();
 </script>
 
 </body>

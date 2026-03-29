@@ -50,7 +50,7 @@
         <div class="proj-left fade-in">
           <span class="proj-badge">Red Team Simulation</span>
           <h1 class="project-title">Operation Wakanda</h1>
-          <p class="proj-desc">Narrative-driven red team simulation based on a real home assignment.<br>Pick an operative and map an attack surface across 14 chapters and 7 branching paths</p>
+          <p class="proj-desc">Interactive cloud attack simulation built around branching paths, red team decision-making, and offensive exploration.</p>
           <div class="proj-tags">
             <span class="proj-tag">Red Team</span>
             <span class="proj-tag">OSINT</span>
@@ -169,6 +169,32 @@ window.addEventListener('load', function() {
     });
   });
 });
+</script>
+
+<script>
+(function() {
+  var navbar = document.querySelector('.navbar');
+  var lastScrollY = window.scrollY;
+  var ticking = false;
+
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      window.requestAnimationFrame(function() {
+        var currentScrollY = window.scrollY;
+        if (currentScrollY <= 10) {
+          navbar.style.transform = 'translateY(0)';
+        } else if (currentScrollY < lastScrollY) {
+          navbar.style.transform = 'translateY(0)';
+        } else {
+          navbar.style.transform = 'translateY(-100%)';
+        }
+        lastScrollY = currentScrollY;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+})();
 </script>
 
 </body>

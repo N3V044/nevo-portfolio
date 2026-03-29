@@ -50,7 +50,7 @@
         <div class="proj-left fade-in">
           <span class="proj-badge">Security Tool</span>
           <h1 class="project-title">PhishGuard</h1>
-          <p class="proj-desc">Rule-based phishing detector scanning for suspicious links, spoofed senders, and urgent language. Returns a 0-10 phishing score with visual gauge and verdict</p>
+          <p class="proj-desc">Phishing detection tool that highlights suspicious indicators and clearly explains why a message was flagged.</p>
           <div class="proj-tags">
             <span class="proj-tag">Python</span>
             <span class="proj-tag">Phishing Detection</span>
@@ -120,6 +120,32 @@ window.addEventListener('load', function() {
     });
   });
 });
+</script>
+
+<script>
+(function() {
+  var navbar = document.querySelector('.navbar');
+  var lastScrollY = window.scrollY;
+  var ticking = false;
+
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      window.requestAnimationFrame(function() {
+        var currentScrollY = window.scrollY;
+        if (currentScrollY <= 10) {
+          navbar.style.transform = 'translateY(0)';
+        } else if (currentScrollY < lastScrollY) {
+          navbar.style.transform = 'translateY(0)';
+        } else {
+          navbar.style.transform = 'translateY(-100%)';
+        }
+        lastScrollY = currentScrollY;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+})();
 </script>
 
 </body>

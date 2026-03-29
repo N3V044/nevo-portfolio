@@ -50,7 +50,7 @@
         <div class="proj-left fade-in">
           <span class="proj-badge">Security Education</span>
           <h1 class="project-title">SQL Injection</h1>
-          <p class="proj-desc">Side-by-side demo showing how SQL injection bypasses a vulnerable login versus how parameterized queries block the exact same attack</p>
+          <p class="proj-desc">Interactive demo that compares vulnerable and secure login flows to show how SQL injection works in practice.</p>
           <div class="proj-tags">
             <span class="proj-tag">SQL</span>
             <span class="proj-tag">Web Security</span>
@@ -121,6 +121,32 @@ window.addEventListener('load', function() {
     });
   });
 });
+</script>
+
+<script>
+(function() {
+  var navbar = document.querySelector('.navbar');
+  var lastScrollY = window.scrollY;
+  var ticking = false;
+
+  window.addEventListener('scroll', function() {
+    if (!ticking) {
+      window.requestAnimationFrame(function() {
+        var currentScrollY = window.scrollY;
+        if (currentScrollY <= 10) {
+          navbar.style.transform = 'translateY(0)';
+        } else if (currentScrollY < lastScrollY) {
+          navbar.style.transform = 'translateY(0)';
+        } else {
+          navbar.style.transform = 'translateY(-100%)';
+        }
+        lastScrollY = currentScrollY;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  });
+})();
 </script>
 
 </body>
