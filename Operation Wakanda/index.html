@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operation Wakanda</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#07070c;--bg2:#0c0c14;--bg3:#12121c;--sf:#181824;--sf2:#1e1e2e;
+--gd:#c9a84c;--gd2:#b8952f;--gbg:rgba(201,168,76,.05);--gb:rgba(201,168,76,.18);--gg:rgba(201,168,76,.1);
+--rd:#e05060;--gn:#4ecb71;--am:#e8a838;
+--iv:#f0ead6;--i2:#cfc8b2;--i3:#a8a290;--i4:#7a7568;--i5:#504c42;
+--bd:#262638;
+--f:'Plus Jakarta Sans',system-ui,sans-serif;--m:'JetBrains Mono',monospace}
+html{scroll-behavior:smooth}
+body{min-height:100vh;background:var(--bg);color:var(--iv);font-family:var(--f);-webkit-font-smoothing:antialiased;overflow-x:hidden;font-size:13px}
+::selection{background:var(--gd);color:var(--bg)}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(rgba(201,168,76,.008) 1px,transparent 1px);background-size:24px 24px;pointer-events:none}
+
+/* PROGRESS */
+.pb{position:fixed;top:0;left:0;right:0;height:3px;z-index:200;background:rgba(38,38,56,.4)}
+.pf{height:100%;background:linear-gradient(90deg,var(--gd2),var(--gd));transition:width .6s;box-shadow:0 0 8px var(--gg)}
+
+/* MINIMAP */
+.mm{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:201;display:none;align-items:center;gap:3px;background:rgba(7,7,12,.88);backdrop-filter:blur(8px);border:1px solid var(--bd);border-radius:16px;padding:4px 10px}
+.mm.on{display:flex}
+.mm .n{width:8px;height:8px;border-radius:50%;background:var(--bd);transition:.3s;position:relative}
+.mm .n.dn{background:var(--gn)}
+.mm .n.ac{background:var(--gd);box-shadow:0 0 6px var(--gg)}
+.mm .n.dd{background:var(--rd)}
+.mm .n.lk{opacity:.2}
+.mm .ln{width:8px;height:1px;background:var(--bd)}
+.mm .n::after{content:attr(data-tip);position:absolute;top:14px;left:50%;transform:translateX(-50%);font-family:var(--m);font-size:.4rem;color:var(--i4);white-space:nowrap;opacity:0;transition:.15s;pointer-events:none}
+.mm .n:hover::after{opacity:1}
+@media(max-width:600px){.mm{padding:3px 7px;gap:2px}.mm .n{width:6px;height:6px}.mm .ln{width:5px}}
+
+/* OBJECTIVES */
+.obj{position:fixed;top:8px;right:8px;z-index:201;display:none;background:rgba(7,7,12,.9);backdrop-filter:blur(8px);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;max-width:180px}
+.obj.on{display:block}
+.obj-t{font-family:var(--m);font-size:.44rem;color:var(--gd);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;font-weight:600}
+.obj-i{display:flex;align-items:center;gap:5px;font-size:.52rem;color:var(--i4);padding:2px 0}
+.obj-i.dn{color:var(--gn)}
+.obj-i .ck{width:10px;height:10px;border-radius:3px;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:.4rem;flex-shrink:0}
+.obj-i.dn .ck{border-color:var(--gn);color:var(--gn);background:rgba(78,203,113,.1)}
+@media(max-width:600px){.obj{max-width:150px;padding:6px 9px;top:6px;right:6px}.obj-i{font-size:.46rem}}
+
+/* INTEL BAR */
+.ib{position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(7,7,12,.93);backdrop-filter:blur(10px);border-top:1px solid var(--bd);padding:5px 12px;display:flex;align-items:center;gap:8px;font-family:var(--m);font-size:.5rem;color:var(--i4);transform:translateY(100%);transition:transform .4s}
+.ib.on{transform:translateY(0)}
+.ib .g{color:var(--gd);font-weight:600}
+.ib .s{width:1px;height:10px;background:var(--bd)}
+.ib .v{color:var(--i2)}
+.ib .t{margin-left:auto}
+.ib-b{font-family:var(--m);font-size:.46rem;font-weight:600;padding:3px 8px;border-radius:3px;border:1px solid var(--bd);background:var(--sf);color:var(--i4);cursor:pointer;transition:.12s;white-space:nowrap}
+.ib-b:hover{border-color:var(--gb);color:var(--gd)}
+.ib-b.rs{border-color:rgba(224,80,96,.12);color:rgba(224,80,96,.5)}
+.ib-b.rs:hover{color:var(--rd)}
+@media(max-width:600px){.ib{font-size:.44rem;gap:5px;padding:4px 8px}.ib-b{font-size:.4rem;padding:2px 6px}}
+
+/* STORY */
+#story{position:relative;z-index:1;padding-bottom:44px}
+.bk{opacity:0;transform:translateY(18px);transition:opacity .5s,transform .5s}
+.bk.v{opacity:1;transform:none}
+.bk.d{opacity:.08;pointer-events:none;filter:blur(2px);transition:.5s;max-height:80px;overflow:hidden}
+.bk.v{opacity:1;transform:none;padding-top:10vh}
+.dv{width:1px;height:28px;background:linear-gradient(transparent,var(--gb),transparent);margin:0 auto}
+
+/* SCAN TRANSITION */
+.scan{text-align:center;padding:32px 16px}
+.scan-bar{width:120px;height:2px;background:var(--bd);border-radius:1px;margin:0 auto 8px;overflow:hidden}
+.scan-fill{height:100%;background:var(--gd);width:0;animation:scanFill 1s ease forwards}
+@keyframes scanFill{to{width:100%}}
+.scan-t{font-family:var(--m);font-size:.48rem;color:var(--gd);letter-spacing:1px;animation:glitch .1s ease .5s 3}
+@keyframes glitch{0%{transform:translateX(-2px)}50%{transform:translateX(2px)}100%{transform:none}}
+
+/* CINEMATIC */
+.cn{min-height:24vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:36px 16px}
+.cn-c{font-family:var(--m);font-size:.46rem;color:var(--gd);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;opacity:0;animation:fi .4s .15s forwards}
+.cn-t{font-size:clamp(1rem,3vw,1.5rem);font-weight:800;letter-spacing:-.3px;background:linear-gradient(135deg,var(--iv),var(--gd));-webkit-background-clip:text;-webkit-text-fill-color:transparent;opacity:0;animation:fi .4s .4s forwards}
+@keyframes fi{to{opacity:1}}
+
+/* HERO */
+.hr{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;position:relative;overflow:hidden}
+.hr-g{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.hr-g svg{width:min(300px,70vw);opacity:.03;animation:sp 100s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.hr-w{position:absolute;top:25%;left:50%;transform:translate(-50%,-50%);width:300px;height:300px;background:radial-gradient(circle,rgba(201,168,76,.04),transparent 70%);pointer-events:none}
+.hr-c{position:relative;z-index:1;padding:16px;max-width:600px}
+.hb{display:inline-flex;align-items:center;gap:5px;background:var(--gbg);border:1px solid var(--gb);border-radius:16px;padding:3px 11px;margin-bottom:16px;font-size:.5rem;font-weight:600;color:var(--gd);letter-spacing:1px;text-transform:uppercase}
+.hb .dt{width:4px;height:4px;background:var(--gd);border-radius:50%;animation:pu 2s infinite}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
+.ht{font-size:clamp(1.8rem,5vw,3.4rem);font-weight:800;letter-spacing:-1px;line-height:1.05;margin-bottom:6px;background:linear-gradient(135deg,var(--iv) 30%,var(--gd));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hss{font-size:.82rem;color:var(--i3);max-width:480px;margin:0 auto 20px;line-height:1.45}
+.bg{font-family:var(--f);font-size:.72rem;font-weight:700;color:var(--bg);background:linear-gradient(135deg,var(--gd),var(--gd2));border:none;padding:10px 28px;border-radius:7px;cursor:pointer;letter-spacing:.4px;text-transform:uppercase;transition:.2s;box-shadow:0 3px 14px rgba(201,168,76,.18)}
+.bg:hover{transform:translateY(-1px);box-shadow:0 5px 20px rgba(201,168,76,.25)}
+
+/* ROLES */
+.rs{max-width:680px;margin:0 auto;padding:0 20px;text-align:center}
+.rg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+@media(max-width:520px){.rg{grid-template-columns:1fr;max-width:260px;margin:20px auto 0}}
+.rc{background:var(--sf);border:2px solid var(--bd);border-radius:10px;cursor:pointer;transition:.3s;overflow:hidden;text-align:center}
+.rc:hover{border-color:var(--gb);transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.rc:hover .ra svg{transform:scale(1.05)}
+.ra{width:100%;height:180px;background:linear-gradient(180deg,#16121e,var(--sf));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+@media(max-width:520px){.ra{height:120px}}
+.ra svg{width:110px;height:110px;transition:transform .3s;filter:drop-shadow(0 2px 6px rgba(201,168,76,.08))}
+@media(max-width:520px){.ra svg{width:75px;height:75px}}
+.ra::after{content:'';position:absolute;bottom:0;left:0;right:0;height:20px;background:linear-gradient(transparent,var(--sf))}
+.rb{padding:12px 14px 16px}
+.rc .rn{font-size:.88rem;font-weight:800;color:var(--iv)}
+.rc .rr{font-size:.48rem;font-weight:600;color:var(--gd);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px}
+.rc .rl{list-style:none;text-align:left}
+.rc .rl li{font-size:.6rem;color:var(--i3);padding:2px 0;display:flex;gap:5px;align-items:center}
+.rc .rl li::before{content:'';width:3px;height:3px;background:var(--gd);border-radius:1px;flex-shrink:0}
+
+/* DIALOGUE */
+.dl{display:flex;gap:8px;margin:8px 0;align-items:flex-start}
+.da{width:34px;height:34px;border-radius:50%;background:var(--sf2);border:1.5px solid var(--gb);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.da svg{width:22px;height:22px}
+.db{background:var(--sf);border:1px solid var(--bd);border-radius:2px 10px 10px 10px;padding:10px 14px;flex:1;font-size:.76rem;color:var(--i2);line-height:1.5}
+.db strong{color:var(--iv);font-weight:600}
+.db .cur{display:inline-block;width:1.5px;height:.8em;background:var(--gd);margin-left:1px;animation:bl .5s infinite}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:0}}
+@media(max-width:600px){.da{width:24px;height:24px}.da svg{width:14px;height:14px}.db{padding:6px 9px;font-size:.64rem}}
+
+.cw{max-width:720px;margin:0 auto;padding:0 20px}
+
+/* BOXES */
+.nb{border-radius:8px;padding:10px 12px;margin:6px 0;font-size:.64rem;line-height:1.45}
+.nb.i{background:var(--gbg);border:1px solid var(--gb);color:var(--i3)}
+.nb.w{background:rgba(139,38,53,.05);border:1px solid rgba(139,38,53,.16);color:var(--i3)}
+.nb.o{background:rgba(78,203,113,.03);border:1px solid rgba(78,203,113,.12);color:var(--i3)}
+.nb.x{background:rgba(255,255,255,.01);border:1px solid var(--bd);color:var(--i5);opacity:.5}
+.nb b{font-size:.5rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px}
+.nb.i b{color:var(--gd)}.nb.w b{color:var(--rd)}.nb.o b{color:var(--gn)}.nb.x b{color:var(--i5)}
+
+/* TERM */
+.tt{background:#05050a;border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin:6px 0}
+.tt-h{padding:4px 8px;background:var(--bg3);border-bottom:1px solid var(--bd);display:flex;gap:3px}
+.td{width:5px;height:5px;border-radius:50%}.td.r{background:#e05060}.td.y{background:#e8a838}.td.g{background:#4ecb71}
+.tt-b{padding:8px 10px;font-family:var(--m);font-size:.56rem;line-height:1.65;color:var(--i4);white-space:pre-wrap;overflow-x:auto}
+.tt-b .c{color:var(--gn)}.tt-b .o{color:var(--i5)}.tt-b .h{color:var(--gd)}
+.tm-cur{display:inline-block;width:4px;height:.9em;background:var(--gn);animation:bl .4s infinite;vertical-align:middle}
+@media(max-width:600px){.tt-b{font-size:.5rem;padding:6px 8px}}
+
+/* CHOICES */
+.cs{display:flex;flex-direction:column;gap:5px;margin:14px 0}
+.cc{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:8px}
+.cc:hover{border-color:var(--gb);background:var(--sf2);transform:translateX(4px)}
+.cc.r{border-color:var(--gb);background:var(--gbg)}
+.cc .a{width:18px;height:18px;border-radius:4px;background:var(--gbg);border:1px solid var(--gb);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--gd);font-size:.45rem;transition:.15s}
+.cc:hover .a{transform:translateX(2px)}
+.cc .l{font-size:.7rem;font-weight:700;color:var(--iv)}
+.cc .de{font-size:.56rem;color:var(--i4)}
+.tg{display:inline-block;font-family:var(--m);font-size:.42rem;font-weight:600;padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:middle}
+.tg.r{color:var(--gd);background:var(--gbg);border:1px solid var(--gb)}
+.tg.w{color:var(--am);background:rgba(232,168,56,.03);border:1px solid rgba(232,168,56,.1)}
+.tg.s{color:var(--gn);background:rgba(78,203,113,.03);border:1px solid rgba(78,203,113,.1)}
+
+/* EVIDENCE */
+.ev{background:var(--sf);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin:8px 0;position:relative}
+.ev-st{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%) rotate(-8deg);font-family:var(--m);font-size:.8rem;font-weight:800;color:rgba(201,168,76,.05);letter-spacing:2px;pointer-events:none}
+.ev-h{padding:7px 11px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:5px;background:var(--bg3)}
+.sv{font-family:var(--m);font-size:.44rem;font-weight:600;padding:1px 5px;border-radius:3px}
+.sv.c{color:var(--rd);background:rgba(224,80,96,.05);border:1px solid rgba(224,80,96,.14)}
+.sv.m{color:var(--am);background:rgba(232,168,56,.04);border:1px solid rgba(232,168,56,.1)}
+.ev-t{font-size:.66rem;font-weight:700;color:var(--iv);flex:1}
+.ev-b{padding:8px 11px}
+.ev-r{display:flex;gap:6px;padding:3px 0;border-bottom:1px solid var(--bd);font-size:.6rem}
+.ev-r:last-child{border-bottom:none}
+.ev-k{color:var(--i5);flex:0 0 70px;font-size:.5rem;font-weight:600;text-transform:uppercase}
+.ev-v{color:var(--i2);line-height:1.35}
+
+/* FINDING */
+.fn{background:var(--sf);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin:6px 0}
+.fn-h{padding:8px 11px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:5px}
+.fb{width:3px;height:16px;border-radius:1px}.fb.c{background:var(--rd)}.fb.h{background:#e88040}.fb.m{background:var(--am)}.fb.l{background:var(--gn)}
+.fn-t{font-size:.72rem;font-weight:700;color:var(--iv)}
+.fn-d{padding:8px 11px;font-size:.6rem;color:var(--i3);line-height:1.4}
+
+.ntf{position:fixed;top:28px;left:50%;transform:translateX(-50%) translateY(-60px);z-index:300;background:var(--sf2);border:1px solid var(--gb);border-radius:8px;padding:7px 16px;font-size:.62rem;font-weight:600;color:var(--gd);box-shadow:0 6px 20px rgba(0,0,0,.5);transition:transform .3s}
+.ntf.on{transform:translateX(-50%) translateY(0)}
+.ntf.rd{border-color:rgba(224,80,96,.18);color:var(--rd)}
+@keyframes shk{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.shk{animation:shk .3s}
+
+.ptc-w{position:fixed;inset:0;pointer-events:none;z-index:250}
+.ptc{position:absolute;width:3px;height:3px;background:var(--gd);border-radius:50%;animation:ptcF .7s ease-out forwards}
+@keyframes ptcF{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--px),var(--py)) scale(0);opacity:0}}
+
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:12px 0}
+@media(max-width:480px){.sg{grid-template-columns:1fr}}
+.sc{background:var(--sf);border:1px solid var(--bd);border-radius:8px;padding:10px;text-align:center}
+.sc-n{font-family:var(--m);font-size:1rem;font-weight:700;color:var(--gd)}
+.sc-l{font-size:.46rem;color:var(--i4);margin-top:1px}
+.ft{text-align:center;padding:24px 14px;border-top:1px solid var(--bd)}
+.ft p{font-size:.52rem;color:var(--i5);line-height:1.5}
+.ft a{color:var(--gd);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="pb"><div class="pf" id="pf" style="width:0%"></div></div>
+<div class="mm" id="mm"></div>
+<div class="obj" id="obj"><div class="obj-t">Objectives</div><div id="objList"></div></div>
+<div class="ib" id="ib"><span class="g" id="iR">-</span><span class="s"></span><span>Intel:<span class="v" id="iE">0</span></span><span class="s"></span><span>Ch:<span class="v" id="iC">0</span></span><span class="s"></span><span>Dead:<span class="v" id="iD">0</span></span><span class="t" id="iT">00:00</span><span class="s"></span><button class="ib-b" onclick="goBack()">&#9664;</button><button class="ib-b rs" onclick="location.reload()">&#8635;</button></div>
+<div class="ntf" id="ntf"></div>
+<div class="ptc-w" id="ptcW"></div>
+<div id="story"></div>
+<script>
+var S={r:null,st:[],ev:0,dd:0,ch:0,t0:null,ti:null,hist:[],obj:[0,0,0,0,0]},EL=document.getElementById('story');
+
+// T'Challa: MALE - angular mask, pointed ears, strong jaw, claw scars, broad armored chest
+var AP='<svg viewBox="0 0 120 120" fill="none" stroke="#c9a84c" stroke-linecap="round"><defs><linearGradient id="gp" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c9a84c" stop-opacity=".15"/><stop offset="100%" stop-color="#c9a84c" stop-opacity=".02"/></linearGradient></defs><circle cx="60" cy="42" r="24" stroke-width="1.5" fill="url(#gp)"/><path d="M60 18v-3" stroke-width="2"/><path d="M43 33l-11-19" stroke-width="2.2"/><path d="M77 33l11-19" stroke-width="2.2"/><path d="M40 40c5-10 11-13 20-13s15 3 20 13" stroke-width="1" fill="none" opacity=".4"/><rect x="47" y="38" width="7" height="2.5" rx="1" fill="#c9a84c" opacity=".8"/><rect x="66" y="38" width="7" height="2.5" rx="1" fill="#c9a84c" opacity=".8"/><path d="M55 50l5 4 5-4" stroke-width="1.5"/><path d="M48 28l24 0" stroke-width="1" opacity=".25"/><path d="M52 32l16 0" stroke-width=".6" opacity=".15"/><path d="M34 72c0-15 12-25 26-25s26 10 26 25" stroke-width="2" fill="url(#gp)"/><path d="M47 60l-4 14" stroke-width="1.2" opacity=".5"/><path d="M53 58l-2 16" stroke-width="1.2" opacity=".5"/><path d="M67 58l2 16" stroke-width="1.2" opacity=".5"/><path d="M73 60l4 14" stroke-width="1.2" opacity=".5"/><path d="M46 72h28" stroke-width="1" opacity=".2"/><circle cx="60" cy="68" r="4" stroke-width=".8" fill="none" opacity=".2"/></svg>';
+
+// Shuri: FEMALE - round softer face, braids flowing up, hoop earrings, slim neck, tech chest piece
+var AS='<svg viewBox="0 0 120 120" fill="none" stroke="#c9a84c" stroke-linecap="round"><defs><linearGradient id="gs" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c9a84c" stop-opacity=".15"/><stop offset="100%" stop-color="#c9a84c" stop-opacity=".02"/></linearGradient></defs><circle cx="60" cy="42" r="24" stroke-width="1.5" fill="url(#gs)"/><path d="M38 30c3-10 11-18 22-18s19 8 22 18" stroke-width="1.3" fill="none"/><path d="M38 28c-3-5-4-12-1-18" stroke-width="1.1" opacity=".45"/><path d="M82 28c3-5 4-12 1-18" stroke-width="1.1" opacity=".45"/><path d="M43 24c-2-5-1-10 2-14" stroke-width=".9" opacity=".35"/><path d="M77 24c2-5 1-10-2-14" stroke-width=".9" opacity=".35"/><path d="M50 20c-1-4 0-7 2-10" stroke-width=".7" opacity=".25"/><path d="M70 20c1-4 0-7-2-10" stroke-width=".7" opacity=".25"/><circle cx="52" cy="42" r="2.8" fill="#c9a84c" opacity=".75"/><circle cx="68" cy="42" r="2.8" fill="#c9a84c" opacity=".75"/><path d="M56 51c2 2.5 6 2.5 8 0" stroke-width="1.3"/><path d="M53 35c4-2 10-2 14 0" stroke-width=".7" opacity=".3"/><circle cx="35" cy="44" r="4" stroke-width="1.1" fill="none" opacity=".6"/><circle cx="35" cy="44" r="1.5" fill="#c9a84c" opacity=".25"/><circle cx="85" cy="44" r="4" stroke-width="1.1" fill="none" opacity=".6"/><circle cx="85" cy="44" r="1.5" fill="#c9a84c" opacity=".25"/><path d="M40 70c0-11 9-20 20-20s20 9 20 20" stroke-width="1.5" fill="url(#gs)"/><circle cx="60" cy="62" r="6" stroke-width="1" fill="none" opacity=".4"/><circle cx="60" cy="62" r="3" stroke-width=".7" fill="none" opacity=".3"/><circle cx="60" cy="62" r="1" fill="#c9a84c" opacity=".35"/><path d="M46 74h28" stroke-width=".5" opacity=".15"/><path d="M49 78h22" stroke-width=".4" opacity=".1"/></svg>';
+
+var MP='<svg viewBox="0 0 40 40" fill="none" stroke="#c9a84c" stroke-linecap="round"><circle cx="20" cy="14" r="9" stroke-width="1" fill="rgba(201,168,76,.06)"/><path d="M14 10l-5-8" stroke-width="1.3"/><path d="M26 10l5-8" stroke-width="1.3"/><rect x="15" y="12" width="4" height="1.5" rx=".5" fill="#c9a84c" opacity=".7"/><rect x="21" y="12" width="4" height="1.5" rx=".5" fill="#c9a84c" opacity=".7"/><path d="M18 18l2 2 2-2" stroke-width="1"/><path d="M10 32c0-6 4-11 10-11s10 5 10 11" stroke-width="1" fill="none"/></svg>';
+var MS='<svg viewBox="0 0 40 40" fill="none" stroke="#c9a84c" stroke-linecap="round"><circle cx="20" cy="14" r="9" stroke-width="1" fill="rgba(201,168,76,.06)"/><path d="M12 10c-1-3-1-7 1-10M28 10c1-3 1-7-1-10" stroke-width=".8" opacity=".4"/><path d="M15 8c-1-2 0-5 1-6M25 8c1-2 0-5-1-6" stroke-width=".6" opacity=".3"/><circle cx="17" cy="14" r="1.8" fill="#c9a84c" opacity=".65"/><circle cx="23" cy="14" r="1.8" fill="#c9a84c" opacity=".65"/><path d="M18 19c1.5 1.5 3 1.5 4.5 0" stroke-width=".9"/><circle cx="9" cy="15" r="2" stroke-width=".8" fill="none" opacity=".45"/><circle cx="31" cy="15" r="2" stroke-width=".8" fill="none" opacity=".45"/><path d="M10 32c0-6 4-11 10-11s10 5 10 11" stroke-width="1" fill="none"/></svg>';
+
+// MAP NODES
+var NODES=['Start','Recon','Auth','Input','Upload','AWS','Creds','War Room','Findings','Impact','End'];
+
+function pr(n){S.ch=n;document.getElementById('pf').style.width=(n/12*100)+'%';document.getElementById('iC').textContent=n;}
+function ae(){S.ev++;document.getElementById('iE').textContent=S.ev;nt('+ Intel');snd('ev');
+var e=document.querySelectorAll('.ev');if(e.length){var r=e[e.length-1].getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2);}}
+function ad(){S.dd++;document.getElementById('iD').textContent=S.dd;snd('dd');}
+function nt(m,r){var n=document.getElementById('ntf');n.textContent=m;n.className='ntf'+(r?' rd':'')+' on';snd('nt');setTimeout(function(){n.classList.remove('on')},1800);}
+function sm(){S.t0=Date.now();S.ti=setInterval(function(){var s=Math.floor((Date.now()-S.t0)/1e3);document.getElementById('iT').textContent=(s/60|0).toString().padStart(2,'0')+':'+(s%60).toString().padStart(2,'0');},1e3);}
+
+function add(h){var d=document.createElement('div');d.className='bk';d.innerHTML=h;var a=EL.querySelectorAll('.bk');for(var i=0;i<a.length;i++)a[i].classList.add('d');EL.querySelectorAll('.dv').forEach(function(x){x.style.height='0'});EL.appendChild(d);S.hist.push(d);setTimeout(function(){d.classList.add('v');d.scrollIntoView({behavior:'smooth',block:'center'});snd('ck');setTimeout(function(){tyRun();tmRun()},80)},40);}
+function dv(){var d=document.createElement('div');d.className='dv';EL.appendChild(d);}
+function scan(msg,cb){dv();add('<div class="scan"><div class="scan-bar"><div class="scan-fill"></div></div><div class="scan-t">'+msg+'</div></div>');setTimeout(cb,1200);}
+function ci(c,t,cb){dv();add('<div class="cn"><div class="cn-c">'+c+'</div><div class="cn-t">'+t+'</div></div>');setTimeout(cb,1200);}
+function P(a){return S.r==='p'?a[0]:a[1];}
+function dl(t){return '<div class="dl"><div class="da">'+(S.r==='p'?MP:MS)+'</div><div class="db" data-txt="'+t.replace(/"/g,'&quot;')+'"></div></div>';}
+
+// TYPING
+function tyRun(){document.querySelectorAll('.db[data-txt]').forEach(function(el){if(el.dataset.dn)return;el.dataset.dn='1';var t=el.dataset.txt.replace(/&quot;/g,'"'),i=0,o='',tag=false;el.innerHTML='<span class="cur"></span>';function tk(){if(i>=t.length){el.innerHTML=t;return;}var c=t[i];if(c==='<')tag=true;if(tag){o+=c;if(c==='>')tag=false;i++;tk();return;}o+=c;i++;el.innerHTML=o+'<span class="cur"></span>';setTimeout(tk,10);}tk();});}
+function tmRun(){document.querySelectorAll('.tt-b').forEach(function(el){if(el.dataset.dn)return;el.dataset.dn='1';var f=el.innerHTML,ls=f.split('\n'),i=0,o='';el.innerHTML='<span class="tm-cur"></span>';function nl(){if(i>=ls.length){el.innerHTML=f;return;}o+=ls[i]+'\n';i++;el.innerHTML=o+'<span class="tm-cur"></span>';setTimeout(nl,ls[i-1]&&ls[i-1].indexOf('class="c"')>-1?200:80);}setTimeout(nl,250);});}
+
+// PARTICLES
+function burst(x,y){var w=document.getElementById('ptcW');for(var i=0;i<10;i++){var p=document.createElement('div');p.className='ptc';var a=Math.random()*6.28,d=30+Math.random()*50;p.style.left=x+'px';p.style.top=y+'px';p.style.setProperty('--px',Math.cos(a)*d+'px');p.style.setProperty('--py',Math.sin(a)*d+'px');w.appendChild(p);setTimeout(function(pp){return function(){if(pp.parentNode)pp.parentNode.removeChild(pp)}}(p),800);}}
+
+// SOUND
+var ax=null;function ia(){if(!ax)ax=new(window.AudioContext||window.webkitAudioContext)();}
+function snd(t){try{ia();var o=ax.createOscillator(),g=ax.createGain();o.connect(g);g.connect(ax.destination);
+if(t==='ck'){o.frequency.value=700;g.gain.value=.02;o.type='sine';o.start();o.stop(ax.currentTime+.04);}
+if(t==='ev'){o.frequency.value=600;g.gain.value=.03;o.type='triangle';o.start();o.frequency.linearRampToValueAtTime(900,ax.currentTime+.12);o.stop(ax.currentTime+.15);}
+if(t==='dd'){o.frequency.value=180;g.gain.value=.04;o.type='sawtooth';o.start();o.frequency.linearRampToValueAtTime(80,ax.currentTime+.2);g.gain.linearRampToValueAtTime(0,ax.currentTime+.25);o.stop(ax.currentTime+.25);}
+if(t==='nt'){o.frequency.value=1100;g.gain.value=.015;o.type='sine';o.start();o.stop(ax.currentTime+.06);}
+if(t==='win'){[0,120,240].forEach(function(d,i){setTimeout(function(){var o2=ax.createOscillator(),g2=ax.createGain();o2.connect(g2);g2.connect(ax.destination);o2.frequency.value=[700,900,1200][i];g2.gain.value=.025;o2.type='sine';o2.start();o2.stop(ax.currentTime+.12);},d);});}
+}catch(e){}}
+
+// MINIMAP
+function mm(active,states){
+var el=document.getElementById('mm');var h='';
+NODES.forEach(function(name,i){
+if(i>0)h+='<span class="ln"></span>';
+var cls='n';
+if(states[i]==='d')cls+=' dn';
+if(states[i]==='x')cls+=' dd';
+if(states[i]==='l')cls+=' lk';
+if(i===active)cls+=' ac';
+h+='<span class="'+cls+'" data-tip="'+name+'"></span>';
+});
+el.innerHTML=h;
+}
+
+// OBJECTIVES
+var OBJ_T=['Map attack surface','Find auth weakness','Discover critical vuln','Compile evidence','Deliver assessment'];
+function objUp(){
+var el=document.getElementById('objList');var h='';
+OBJ_T.forEach(function(t,i){h+='<div class="obj-i'+(S.obj[i]?' dn':'')+'"><div class="ck">'+(S.obj[i]?'&#10003;':'')+'</div>'+t+'</div>';});
+el.innerHTML=h;
+}
+function objDone(i){if(!S.obj[i]){S.obj[i]=1;objUp();nt('Objective complete');}}
+
+// BACK
+function goBack(){if(S.hist.length<2)return;var els=EL.querySelectorAll('.bk,.dv,.cn,.scan');var rm=[];for(var i=els.length-1;i>=0&&rm.length<3;i--)rm.push(els[i]);rm.forEach(function(e){if(e&&e.parentNode)e.parentNode.removeChild(e)});var rest=EL.querySelectorAll('.bk');if(rest.length)rest[rest.length-1].classList.remove('d');S.hist.pop();if(S.ch>0)S.ch--;}
+
+// HERO
+add('<div class="hr"><div class="hr-g"><svg viewBox="0 0 400 400" fill="none" stroke="rgba(201,168,76,.15)" stroke-width=".5"><polygon points="200,20 380,110 380,290 200,380 20,290 20,110"/><polygon points="200,60 340,130 340,270 200,340 60,270 60,130"/><polygon points="200,100 300,150 300,250 200,300 100,250 100,150"/></svg></div><div class="hr-w"></div><div class="hr-c"><div class="hb"><span class="dt"></span>Interactive Security Mission</div><h1 class="ht">Operation<br>Wakanda</h1><p class="hss">Choose your operative. Infiltrate the bank. Find every weakness. Every choice matters.</p><button class="bg" onclick="goRole()">Start Mission</button></div></div>');
+
+function goRole(){pr(1);dv();add('<div class="rs"><div class="cn-c" style="opacity:1">Select Operative</div><div class="cn-t" style="opacity:1;font-size:1.1rem">Choose Your Role</div><div class="rg"><div class="rc" onclick="pk(\'p\')"><div class="ra">'+AP+'</div><div class="rb"><div class="rn">T\'Challa</div><div class="rr">Strategic Command</div><ul class="rl"><li>Field decisions</li><li>Risk-forward</li><li>Direct action</li></ul></div></div><div class="rc" onclick="pk(\'s\')"><div class="ra">'+AS+'</div><div class="rb"><div class="rn">Shuri</div><div class="rr">Technical Intelligence</div><ul class="rl"><li>Systems analysis</li><li>Precision methods</li><li>Deep investigation</li></ul></div></div></div></div>');}
+
+function pk(r){S.r=r;sm();
+document.getElementById('ib').classList.add('on');
+document.getElementById('mm').classList.add('on');
+document.getElementById('obj').classList.add('on');
+document.getElementById('iR').textContent=r==='p'?'T\'Challa':'Shuri';
+objUp();
+document.querySelectorAll('.rc').forEach(function(c){c.style.opacity='.1';c.style.pointerEvents='none'});
+event.currentTarget.style.opacity='1';event.currentTarget.style.borderColor='var(--gd)';
+nt(r==='p'?'T\'Challa ready':'Shuri ready');
+mm(0,['d','l','l','l','l','l','l','l','l','l','l']);
+setTimeout(function(){scan('Establishing secure channel...',C1)},300);}
+
+function C1(){ci('01','Mission Brief',function(){pr(2);S.st.push('b');dv();
+mm(0,['d','l','l','l','l','l','l','l','l','l','l']);
+add('<div class="cw">'+dl(P(['Royal Bank of Wakanda. AWS migration. <strong>Public website only. No source. No internal access.</strong>','Target acquired. <strong>Gray Box. Public web only.</strong>']))+
+'<div class="nb i"><b>Crown Jewels</b>Admin Access / RCE / Privilege Escalation / Secrets / Credentials / Domain Controller</div>'+
+'<div class="cs"><div class="cc r" onclick="C2()"><div class="a">&#9654;</div><div><div class="l">Connect to Target</div></div></div></div></div>');});}
+
+function C2(){scan('Connecting to 54.224.141.3...',function(){ci('02','Connectivity',function(){pr(3);S.st.push('c');dv();
+add('<div class="cw">'+dl(P(['Connection failed. Target unreachable.','Timeouts on all protocols.']))+
+'<div class="tt"><div class="tt-h"><span class="td r"></span><span class="td y"></span><span class="td g"></span></div><div class="tt-b"><span class="c">$ curl 54.224.141.3</span>\n<span class="o">Timed out</span>\n<span class="c">$ ping 54.224.141.3</span>\n<span class="o">Timed out</span></div></div>'+
+'<div class="nb w"><b>Lab Down</b>Proceeding with methodology.</div>'+
+'<div class="cs"><div class="cc r" onclick="C3()"><div class="a">&#9654;</div><div><div class="l">Begin Recon</div></div></div></div></div>');});});}
+
+function C3(){scan('Scanning perimeter...',function(){ci('03','Reconnaissance',function(){pr(4);S.st.push('r');objDone(0);dv();
+mm(1,['d','d','l','l','l','l','l','l','l','l','l']);
+add('<div class="cw">'+dl(P(['Scanning. Every service is a way in.','Enumerating all visible services.']))+
+'<div class="tt"><div class="tt-h"><span class="td r"></span><span class="td y"></span><span class="td g"></span></div><div class="tt-b"><span class="c">$ nmap TARGET</span>\n<span class="h">80/tcp  open</span>\n<span class="h">443/tcp open</span>\n\n<span class="c">$ gobuster</span>\n<span class="h">/login</span>   200\n<span class="h">/admin</span>   302\n<span class="h">/uploads</span> 403\n<span class="h">/api/v1</span>  404</div></div>'+
+'<div class="nb i"><b>4 Vectors</b>Login, admin, uploads, API endpoint.</div>'+
+'<div class="cs">'+
+'<div class="cc r" onclick="C4()"><div class="a">&#9654;</div><div><div class="l">Test Authentication</div><span class="tg r">'+P(['go','priority'])+'</span></div></div>'+
+'<div class="cc" onclick="C5()"><div class="a">&#9654;</div><div><div class="l">Test Input Handling</div></div></div>'+
+'<div class="cc" onclick="CX()"><div class="a">&#9654;</div><div><div class="l">Force Admin Access</div><span class="tg w">risky</span></div></div>'+
+'<div class="cc" onclick="CA()"><div class="a">&#9654;</div><div><div class="l">Probe API Endpoint</div><div class="de">New vector from scan</div></div></div>'+
+'</div></div>');ae();});});}
+
+function CX(){S.st.push('x');ad();dv();
+mm(1,['d','d','l','l','l','l','l','l','l','l','l']);
+add('<div class="cw"><div class="cn-c" style="opacity:1;color:var(--rd)">ACCESS DENIED</div><div class="cn-t" style="opacity:1;font-size:1rem;-webkit-text-fill-color:var(--rd)">Dead End</div>'+
+dl(P(['Gates sealed.','Auth enforced everywhere.']))+
+'<div class="tt"><div class="tt-h"><span class="td r"></span><span class="td y"></span><span class="td g"></span></div><div class="tt-b"><span class="c">/admin</span>          <span class="o">302</span>\n<span class="c">/admin/dashboard</span> <span class="o">302</span>\n<span class="c">/admin/users</span>     <span class="o">302</span></div></div>'+
+'<div class="nb x"><b>Blocked</b>No entry here.</div>'+
+'<div class="cs"><div class="cc r" onclick="C4()"><div class="a">&#9654;</div><div><div class="l">Try Auth Testing</div><span class="tg r">return</span></div></div><div class="cc" onclick="CA()"><div class="a">&#9654;</div><div><div class="l">Try API Probe</div></div></div></div></div>');
+nt('Dead End','red');setTimeout(function(){var b=EL.querySelectorAll('.bk');b[b.length-1].classList.add('shk')},60);}
+
+function CA(){scan('Probing API...',function(){ci('03b','API Analysis',function(){pr(4);S.st.push('api');dv();
+mm(1,['d','d','l','l','l','l','l','l','l','l','l']);
+add('<div class="cw">'+dl(P(['Hidden API. Could reveal backend structure.','REST endpoint detected. Analyzing response headers.']))+
+'<div class="tt"><div class="tt-h"><span class="td r"></span><span class="td y"></span><span class="td g"></span></div><div class="tt-b"><span class="c">$ curl -v /api/v1</span>\n<span class="o">404 Not Found</span>\n<span class="h">Server: Apache/2.4.49</span>\n<span class="h">X-Powered-By: PHP/7.4</span>\n\n<span class="c">$ curl /api/v1/users</span>\n<span class="h">{"error":"unauthorized"}</span>\n<span class="o">API exists but requires auth</span></div></div>'+
+'<div class="ev"><div class="ev-st">DECLASSIFIED</div><div class="ev-h"><span class="sv m">MEDIUM</span><span class="ev-t">Version Disclosure via API</span></div><div class="ev-b"><div class="ev-r"><span class="ev-k">Vector</span><span class="ev-v">Apache 2.4.49 + PHP 7.4 exposed</span></div><div class="ev-r"><span class="ev-k">Impact</span><span class="ev-v">Known CVEs targetable</span></div></div></div>'+
+'<div class="cs"><div class="cc r" onclick="C4()"><div class="a">&#9654;</div><div><div class="l">Test Authentication</div><span class="tg r">continue</span></div></div><div class="cc" onclick="C5()"><div class="a">&#9654;</div><div><div class="l">Test Inputs</div></div></div></div></div>');ae();});});}
+
+function C4(){scan('Testing auth controls...',function(){ci('04','Authentication',function(){pr(5);S.st.push('a');objDone(1);dv();
+mm(2,['d','d','d','l','l','l','l','l','l','l','l']);
+add('<div class="cw">'+dl(P(['Testing the gate.','Checking auth controls.']))+
+'<div class="tt"><div class="tt-h"><span class="td r"></span><span class="td y"></span><span class="td g"></span></div><div class="tt-b"><span class="c">Test: error messages</span>\n<span class="h">"Invalid username" vs "Invalid password"</span>\n<span class="h">Username enumeration!</span>\n\n<span class="c">Test: rate limiting</span>\n<span class="o">No lockout after 50 attempts</span>\n<span class="h">Brute force possible</span></div></div>'+
+'<div class="ev"><div class="ev-st">DECLASSIFIED</div><div class="ev-h"><span class="sv m">MEDIUM</span><span class="ev-t">Username Enumeration + No Rate Limit</span></div><div class="ev-b"><div class="ev-r"><span class="ev-k">Vector</span><span class="ev-v">Error messages + unlimited attempts</span></div><div class="ev-r"><span class="ev-k">Impact</span><span class="ev-v">Brute force attack viable</span></div></div></div>'+
+'<div class="cs"><div class="cc r" onclick="C5()"><div class="a">&#9654;</div><div><div class="l">Test Inputs</div><span class="tg r">next</span></div></div><div class="cc" onclick="C6()"><div class="a">&#9654;</div><div><div class="l">Check Uploads</div></div></div><div class="cc" onclick="CC()"><div class="a">&#9654;</div><div><div class="l">Test Credentials</div><div class="de">Try common admin creds</div></div></div></div></div>');ae();});});}
+
+function CC(){scan('Testing credentials...',function(){ci('04b','Credential Testing',function(){pr(5);S.st.push('cred');dv();
+mm(6,['d','d','d','l','l','l','d','l','l','l','l']);
+add('<div class="cw">'+dl(P(['Default credentials. Sometimes the simplest attack works.','Testing common credential pairs against login.']))+
+'<div class="tt"><div class="tt-h"><span class="td r"></span><span class="td y"></span><span class="td g"></span></div><div class="tt-b"><span class="c">admin:admin</span>      <span class="o">Failed</span>\n<span class="c">admin:password</span>   <span class="o">Failed</span>\n<span class="c">admin:Admin123</span>   <span class="o">Failed</span>\n<span class="c">root:toor</span>       <span class="o">Failed</span>\n\n<span class="h">No default creds found</span>\n<span class="o">But: no account lockout triggered</span></div></div>'+
+'<div class="nb i"><b>Observation</b>No defaults work, but zero lockout policy confirmed. Combined with username enumeration = brute force viable.</div>'+
+'<div class="cs"><div class="cc r" onclick="C5()"><div class="a">&#9654;</div><div><div class="l">Test Inputs</div><span class="tg r">continue</span></div></div><div class="cc" onclick="C6()"><div class="a">&#9654;</div><div><div class="l">Check Uploads</div></div></div></div></div>');});});}
+
+function C5(){scan('Testing input validation...',function(){ci('05','Input Testing',function(){pr(6);S.st.push('i');objDone(2);dv();
+mm(3,['d','d','d','d','l','l','l','l','l','l','l']);
+add('<div class="cw">'+dl(P(['One character reveals everything.','Testing server handling.']))+
+'<div class="tt"><div class="tt-h"><span class="td r"></span><span class="td y"></span><span class="td g"></span></div><div class="tt-b"><span class="c">Input: single quote</span>\n<span class="h">500 Server Error!</span>\n<span class="h">SQL Injection indicator</span>\n\n<span class="c">Input: script tag</span>\n<span class="h">Reflected - XSS</span>\n\n<span class="c">Input: path traversal</span>\n<span class="o">400 - Blocked</span></div></div>'+
+'<div class="ev"><div class="ev-st">DECLASSIFIED</div><div class="ev-h"><span class="sv c">CRITICAL</span><span class="ev-t">SQL Injection</span></div><div class="ev-b"><div class="ev-r"><span class="ev-k">Vector</span><span class="ev-v">Unsanitized DB query</span></div><div class="ev-r"><span class="ev-k">Impact</span><span class="ev-v">Admin bypass + data access</span></div></div></div>'+
+'<div class="cs"><div class="cc" onclick="C6()"><div class="a">&#9654;</div><div><div class="l">Check Uploads</div></div></div><div class="cc" onclick="C6b()"><div class="a">&#9654;</div><div><div class="l">Probe AWS Metadata</div><div class="de">Check cloud misconfig</div></div></div><div class="cc r" onclick="C7()"><div class="a">&#9654;</div><div><div class="l">Compile Evidence</div><span class="tg s">strongest</span></div></div></div></div>');ae();});});}
+
+function C6(){scan('Analyzing uploads...',function(){ci('06','File Upload',function(){pr(7);S.st.push('u');dv();
+mm(4,['d','d','d','d','d','l','l','l','l','l','l']);
+add('<div class="cw">'+dl(P(['Control uploads, control the server.','Testing upload validation.']))+
+'<div class="tt"><div class="tt-h"><span class="td r"></span><span class="td y"></span><span class="td g"></span></div><div class="tt-b"><span class="c">Upload: shell.php</span>\n<span class="h">200 OK - Accepted!</span>\n\n<span class="c">/uploads/shell.php</span>\n<span class="h">EXECUTABLE</span></div></div>'+
+'<div class="ev"><div class="ev-st">DECLASSIFIED</div><div class="ev-h"><span class="sv c">CRITICAL</span><span class="ev-t">RCE via Upload</span></div><div class="ev-b"><div class="ev-r"><span class="ev-k">Vector</span><span class="ev-v">Executable in web dir</span></div><div class="ev-r"><span class="ev-k">Impact</span><span class="ev-v">Remote Code Execution</span></div></div></div>'+
+'<div class="cs"><div class="cc r" onclick="C7()"><div class="a">&#9654;</div><div><div class="l">Compile Evidence</div><span class="tg s">proceed</span></div></div></div></div>');ae();});});}
+
+function C6b(){scan('Querying metadata service...',function(){ci('06b','AWS Recon',function(){pr(7);S.st.push('aws');dv();
+mm(5,['d','d','d','d','l','d','l','l','l','l','l']);
+add('<div class="cw">'+dl(P(['Cloud metadata. The keys to the kingdom.','Testing SSRF to AWS metadata endpoint.']))+
+'<div class="tt"><div class="tt-h"><span class="td r"></span><span class="td y"></span><span class="td g"></span></div><div class="tt-b"><span class="c">$ curl http://169.254.169.254/latest/meta-data/</span>\n<span class="h">ami-id</span>\n<span class="h">instance-id</span>\n<span class="h">iam/</span>\n\n<span class="c">$ curl .../iam/security-credentials/</span>\n<span class="h">EC2-WebApp-Role</span>\n<span class="o">IAM role exposed via metadata</span></div></div>'+
+'<div class="ev"><div class="ev-st">DECLASSIFIED</div><div class="ev-h"><span class="sv c">CRITICAL</span><span class="ev-t">AWS Metadata Exposure</span></div><div class="ev-b"><div class="ev-r"><span class="ev-k">Vector</span><span class="ev-v">SSRF to 169.254.169.254</span></div><div class="ev-r"><span class="ev-k">Impact</span><span class="ev-v">IAM credentials, lateral movement</span></div></div></div>'+
+'<div class="cs"><div class="cc" onclick="C6()"><div class="a">&#9654;</div><div><div class="l">Also Check Uploads</div></div></div><div class="cc r" onclick="C7()"><div class="a">&#9654;</div><div><div class="l">Compile Evidence</div><span class="tg s">proceed</span></div></div></div></div>');ae();});});}
+
+function C7(){scan('Compiling intelligence...',function(){ci('07','War Room',function(){pr(8);S.st.push('w');objDone(3);dv();
+var h=function(x){return S.st.indexOf(x)>-1};
+mm(7,['d','d',h('a')?'d':'l',h('i')?'d':'l',h('u')?'d':'l',h('aws')?'d':'l',h('cred')?'d':'l','d','l','l','l']);
+add('<div class="cw">'+dl(P(['All intel assembled.','Evidence organized.']))+
+'<div class="nb i"><b>Integrity</b>All evidence <strong>simulated</strong>. Lab was inaccessible.</div>'+
+'<div class="cs"><div class="cc r" onclick="C8()"><div class="a">&#9654;</div><div><div class="l">Generate Findings</div></div></div></div></div>');});});}
+
+function C8(){scan('Generating report...',function(){ci('08','Findings',function(){pr(9);S.st.push('f');dv();
+mm(8,['d','d','d','d','d','d','d','d','d','l','l']);
+add('<div class="cw">'+dl(P(['Critical gaps found.','Findings documented.']))+
+'<div class="fn"><div class="fn-h"><div class="fb c"></div><div class="fn-t">Weak Access Control</div></div><div class="fn-d">Fix: server-side auth, MFA</div></div>'+
+'<div class="fn"><div class="fn-h"><div class="fb c"></div><div class="fn-t">Unsafe File Upload</div></div><div class="fn-d">Fix: allowlist, outside webroot</div></div>'+
+'<div class="fn"><div class="fn-h"><div class="fb h"></div><div class="fn-t">AWS Metadata Exposure</div></div><div class="fn-d">Fix: IMDSv2, SSRF protection</div></div>'+
+'<div class="fn"><div class="fn-h"><div class="fb m"></div><div class="fn-t">Weak Secrets</div></div><div class="fn-d">Fix: Secrets Manager, rotation</div></div>'+
+'<div class="fn"><div class="fn-h"><div class="fb l"></div><div class="fn-t">Info Disclosure</div></div><div class="fn-d">Fix: generic errors, hide headers</div></div>'+
+'<div class="cs"><div class="cc r" onclick="C9()"><div class="a">&#9654;</div><div><div class="l">Executive Impact</div></div></div></div></div>');});});}
+
+function C9(){ci('09','Crown Jewel Impact',function(){pr(10);S.st.push('e');dv();
+mm(9,['d','d','d','d','d','d','d','d','d','d','l']);
+add('<div class="cw">'+dl(P(['Assets exposed.','Chain mapped.']))+
+'<div class="ev"><div class="ev-h"><span class="sv c">P1</span><span class="ev-t">Admin + RCE Chain</span></div><div class="ev-b"><div class="ev-r"><span class="ev-k">Chain</span><span class="ev-v">Enum->SQLi->Admin->Upload->RCE</span></div><div class="ev-r"><span class="ev-k">Impact</span><span class="ev-v">Full control, customer data</span></div></div></div>'+
+'<div class="ev"><div class="ev-h"><span class="sv m">P2</span><span class="ev-t">Lateral via AWS</span></div><div class="ev-b"><div class="ev-r"><span class="ev-k">Chain</span><span class="ev-v">SSRF->Metadata->IAM->Cloud</span></div></div></div>'+
+'<div class="cs"><div class="cc r" onclick="CE()"><div class="a">&#9654;</div><div><div class="l">Complete Mission</div></div></div></div></div>');});}
+
+function CE(){scan('Finalizing...',function(){ci('Final','Mission Complete',function(){pr(12);clearInterval(S.ti);snd('win');objDone(4);
+var el=Math.floor((Date.now()-S.t0)/1e3),h=function(x){return S.st.indexOf(x)>-1};
+var paths=S.st.filter(function(x){return['a','i','u','aws','api','cred','x'].indexOf(x)>-1}).length;
+var rt=paths>=5?'Elite Analyst':paths>=3?(S.dd>0?'Thorough Explorer':'Strategic Operative'):'Direct Strike';
+var ts=(el/60|0).toString().padStart(2,'0')+':'+(el%60).toString().padStart(2,'0');
+mm(10,['d','d','d','d','d','d','d','d','d','d','d']);
+dv();add('<div class="cw">'+dl(P(['Mission done.','Complete.']))+
+'<div class="sg"><div class="sc"><div class="sc-n">'+ts+'</div><div class="sc-l">Time</div></div><div class="sc"><div class="sc-n">'+S.ev+'</div><div class="sc-l">Intel</div></div><div class="sc"><div class="sc-n">'+paths+'/7</div><div class="sc-l">Paths</div></div></div>'+
+'<div class="nb o"><b>'+rt+'</b>'+(S.r==='p'?'T\'Challa':'Shuri')+' | Findings: 5 | Crown Jewels: 7/7 | Dead Ends: '+S.dd+'</div>'+
+'<p style="text-align:center;margin:14px 0;font-size:.9rem;font-weight:800"><span style="background:linear-gradient(135deg,var(--iv),var(--gd));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Wakanda Forever.</span></p>'+
+'<div style="text-align:center"><button class="bg" onclick="location.reload()">Play Again</button></div>'+
+'<div class="ft"><p>By <a href="https://github.com/N3V044" target="_blank">Nevo Ben Ami</a><br>Simulated. No systems compromised.</p></div></div>');});});}
+</script>
+</body>
+</html>

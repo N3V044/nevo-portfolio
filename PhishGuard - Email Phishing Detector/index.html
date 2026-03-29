@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PhishGuard - Email Phishing Detector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:     #060a0f; --panel:  #0c1420; --border: #1a3050;
+  --accent: #00d4ff; --danger: #ff4060; --safe:   #00ff9f;
+  --warn:   #ffcc00; --text:   #c8d8e8; --muted:  #4a6070;
+  --mono:   'Share Tech Mono', monospace; --ui: 'Rajdhani', sans-serif;
+}
+html,body { min-height:100%; background:var(--bg); color:var(--text); font-family:var(--ui); overflow-x:hidden; }
+body::before {
+  content:''; position:fixed; inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,.012) 2px,rgba(0,212,255,.012) 4px);
+  pointer-events:none; z-index:9999;
+}
+.app { max-width:860px; margin:0 auto; padding:36px 20px 70px; }
+
+/* header */
+header { text-align:center; margin-bottom:44px; }
+.logo-row { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:6px; }
+.logo-icon { font-size:2rem; filter:drop-shadow(0 0 10px var(--accent)); }
+h1 { font-family:var(--ui); font-weight:700; font-size:2.2rem; letter-spacing:7px; text-transform:uppercase; color:var(--accent); text-shadow:0 0 22px rgba(0,212,255,.45); }
+.tagline { font-family:var(--mono); font-size:.72rem; color:var(--muted); letter-spacing:3px; text-transform:uppercase; margin-top:2px; }
+.hbar { width:100%; height:1px; margin-top:20px; background:linear-gradient(90deg,transparent,var(--accent),transparent); opacity:.45; }
+
+.section-label { font-family:var(--mono); font-size:.65rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+
+/* sample cards */
+.samples-section { margin-bottom:28px; }
+.samples-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+@media(max-width:600px){ .samples-grid{ grid-template-columns:1fr; } }
+.sample-card {
+  background:var(--panel); border:1px solid var(--border); border-radius:4px;
+  padding:14px 16px; cursor:pointer; transition:all .22s; position:relative; overflow:hidden;
+}
+.sample-card::after {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,212,255,.06),transparent 70%);
+  opacity:0; transition:opacity .22s; pointer-events:none;
+}
+.sample-card.high  { --c: var(--danger); }
+.sample-card.med   { --c: var(--warn);   }
+.sample-card.legit { --c: var(--safe);   }
+.sample-card:hover { border-color:var(--c,var(--accent)); transform:translateY(-1px); }
+.sample-card:hover::after { opacity:1; }
+.sample-card.active { border-color:var(--c,var(--accent)); background:rgba(0,212,255,.04); }
+.sc-badge { display:inline-block; font-family:var(--mono); font-size:.6rem; letter-spacing:1px; padding:2px 8px; border-radius:2px; margin-bottom:8px; border:1px solid; }
+.sample-card.high  .sc-badge { color:var(--danger); border-color:rgba(255,64,96,.35);  background:rgba(255,64,96,.08);  }
+.sample-card.med   .sc-badge { color:var(--warn);   border-color:rgba(255,204,0,.35);   background:rgba(255,204,0,.07);  }
+.sample-card.legit .sc-badge { color:var(--safe);   border-color:rgba(0,255,159,.3);    background:rgba(0,255,159,.06);  }
+.sc-title { font-weight:700; font-size:.9rem; letter-spacing:1px; margin-bottom:4px; color:var(--text); }
+.sc-desc  { font-family:var(--mono); font-size:.65rem; color:var(--muted); line-height:1.5; }
+.sc-from  { font-family:var(--mono); font-size:.62rem; color:var(--muted); margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.or-row { display:flex; align-items:center; gap:14px; margin:20px 0; font-family:var(--mono); font-size:.65rem; color:var(--muted); letter-spacing:2px; }
+.or-row::before,.or-row::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.upload-zone {
+  border:1px dashed var(--border); border-radius:4px; padding:26px 20px;
+  text-align:center; cursor:pointer; transition:all .22s; background:var(--panel); margin-bottom:16px;
+}
+.upload-zone:hover,.upload-zone.drag-over { border-color:var(--accent); background:rgba(0,212,255,.04); box-shadow:0 0 18px rgba(0,212,255,.08); }
+.upload-zone input { display:none; }
+.uz-icon { font-size:2rem; display:block; margin-bottom:8px; }
+.upload-zone h3 { font-size:.95rem; font-weight:600; letter-spacing:2px; color:var(--accent); margin-bottom:4px; }
+.upload-zone p  { font-family:var(--mono); font-size:.68rem; color:var(--muted); }
+
+.paste-section { margin-bottom:16px; }
+textarea {
+  width:100%; height:200px; background:var(--panel); border:1px solid var(--border); border-radius:4px;
+  color:var(--text); font-family:var(--mono); font-size:.8rem; line-height:1.65;
+  padding:14px 16px; resize:vertical; outline:none; transition:border-color .2s;
+}
+textarea:focus { border-color:var(--accent); box-shadow:0 0 8px rgba(0,212,255,.08); }
+textarea::placeholder { color:var(--muted); }
+
+.btn-scan {
+  display:block; width:100%; background:transparent; border:1px solid var(--accent);
+  color:var(--accent); font-family:var(--ui); font-weight:700; font-size:.95rem;
+  letter-spacing:4px; text-transform:uppercase; padding:13px 0; border-radius:4px;
+  cursor:pointer; transition:all .22s; position:relative; overflow:hidden;
+}
+.btn-scan::before {
+  content:''; position:absolute; left:-100%; top:0; width:100%; height:100%;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.14),transparent); transition:left .38s;
+}
+.btn-scan:hover::before { left:100%; }
+.btn-scan:hover { background:rgba(0,212,255,.08); box-shadow:0 0 18px rgba(0,212,255,.15); }
+.btn-scan:active { transform:scale(.99); }
+
+.scanning { display:none; text-align:center; padding:30px; font-family:var(--mono); color:var(--accent); }
+.scanning.on { display:block; }
+.scan-track { width:100%; height:2px; background:var(--border); border-radius:2px; overflow:hidden; margin:14px 0; }
+.scan-fill { height:100%; width:35%; background:linear-gradient(90deg,var(--accent),var(--danger)); animation:sweep 1.1s ease-in-out infinite; }
+@keyframes sweep { 0%{ transform:translateX(-150%); } 100%{ transform:translateX(450%); } }
+
+#results { display:none; margin-top:28px; animation:riseIn .35s ease; }
+@keyframes riseIn { from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:translateY(0); } }
+
+/* VIEW TOGGLE */
+.view-toggle {
+  display:flex; gap:2px; margin-bottom:16px;
+  background:var(--panel); border:1px solid var(--border); border-radius:4px; padding:3px;
+}
+.view-btn {
+  flex:1; font-family:var(--mono); font-size:.7rem; letter-spacing:1.5px; text-transform:uppercase;
+  padding:7px 14px; border:none; background:transparent; color:var(--muted); cursor:pointer;
+  border-radius:3px; transition:all .2s; text-align:center;
+}
+.view-btn:hover { color:var(--text); }
+.view-btn.active {
+  background:rgba(0,212,255,.08); color:var(--accent); border:1px solid rgba(0,212,255,.2);
+  box-shadow:0 0 8px rgba(0,212,255,.06);
+}
+
+/* STANDARD VIEW */
+.standard-view { display:block; }
+.standard-view.hidden { display:none; }
+
+.verdict-banner {
+  border-radius:4px 4px 0 0; padding:18px 22px;
+  display:flex; align-items:center; gap:16px;
+  border:1px solid; border-bottom:none;
+}
+.verdict-banner.phishing { border-color:var(--danger); background:rgba(255,64,96,.08); animation:phishPulse 2.5s infinite; }
+.verdict-banner.safe     { border-color:var(--safe);   background:rgba(0,255,159,.06); }
+@keyframes phishPulse { 0%,100%{ box-shadow:none; } 50%{ box-shadow:0 0 18px rgba(255,64,96,.12); } }
+
+.vb-icon   { font-size:2rem; }
+.vb-label  { font-family:var(--mono); font-size:.62rem; letter-spacing:3px; color:var(--muted); }
+.vb-verdict{ font-size:1.3rem; font-weight:700; letter-spacing:2px; margin-top:2px; }
+.verdict-banner.phishing .vb-verdict { color:var(--danger); }
+.verdict-banner.safe     .vb-verdict { color:var(--safe);   }
+.vb-score { margin-left:auto; text-align:center; font-family:var(--mono); }
+.vb-score .sc-num { font-size:2rem; font-weight:700; color:var(--accent); line-height:1; }
+.vb-score .sc-sub { font-size:.62rem; letter-spacing:2px; color:var(--muted); margin-top:2px; }
+.vb-score .sc-brk { font-size:.75rem; color:var(--muted); margin-top:3px; }
+
+.result-body { border:1px solid var(--border); border-top:none; border-radius:0 0 4px 4px; background:var(--panel); padding:18px 22px; }
+.result-row { display:flex; gap:12px; padding:7px 0; border-bottom:1px solid rgba(26,48,80,.5); font-family:var(--mono); font-size:.75rem; line-height:1.55; align-items:flex-start; }
+.result-row:last-child { border-bottom:none; }
+.rr-key { color:var(--muted); flex:0 0 148px; letter-spacing:1px; }
+.rr-val { color:var(--text); word-break:break-word; }
+.ind-list { list-style:none; }
+.ind-list li { padding:5px 0; border-bottom:1px solid rgba(26,48,80,.4); font-family:var(--mono); font-size:.73rem; line-height:1.55; display:flex; gap:8px; }
+.ind-list li:last-child { border-bottom:none; }
+.ind-dot { color:var(--danger); flex-shrink:0; margin-top:1px; }
+.ind-none { color:var(--safe); }
+
+.btn-reset {
+  display:block; width:100%; margin-top:14px; background:transparent;
+  border:1px solid var(--border); color:var(--muted); font-family:var(--ui);
+  font-weight:600; font-size:.8rem; letter-spacing:3px; text-transform:uppercase;
+  padding:9px 0; border-radius:4px; cursor:pointer; transition:all .2s;
+}
+.btn-reset:hover { border-color:var(--muted); color:var(--text); }
+
+/* === INVESTIGATION MODE === */
+.investigation-view { display:none; }
+.investigation-view.visible { display:block; animation:riseIn .35s ease; }
+
+.inv-layout { display:grid; grid-template-columns:1fr 360px; gap:14px; }
+@media(max-width:800px){ .inv-layout { grid-template-columns:1fr; } }
+
+/* Email preview */
+.inv-email { background:var(--panel); border:1px solid var(--border); border-radius:4px; overflow:hidden; }
+.inv-email-header { padding:10px 14px; border-bottom:1px solid var(--border); background:rgba(0,212,255,.03); }
+.inv-email-header-row { display:flex; gap:8px; padding:2px 0; font-family:var(--mono); font-size:.7rem; line-height:1.45; }
+.inv-hdr-key { color:var(--muted); flex:0 0 56px; text-transform:uppercase; font-size:.58rem; letter-spacing:1px; padding-top:1px; }
+.inv-hdr-val { color:var(--text); word-break:break-word; }
+.inv-email-body {
+  padding:14px; font-family:var(--mono); font-size:.76rem; line-height:1.65;
+  color:var(--text); white-space:pre-wrap; word-break:break-word; max-height:460px; overflow-y:auto;
+}
+.inv-email-body .hl-link { color:var(--danger); text-decoration:underline; text-decoration-color:rgba(255,64,96,.35); }
+.inv-email-body .hl-urgent { color:var(--warn); background:rgba(255,204,0,.06); padding:0 2px; border-radius:2px; }
+
+/* Investigation panel */
+.inv-panel { display:flex; flex-direction:column; gap:10px; }
+.inv-card { background:var(--panel); border:1px solid var(--border); border-radius:4px; overflow:hidden; }
+.inv-card-hd {
+  padding:8px 12px; border-bottom:1px solid var(--border);
+  font-family:var(--mono); font-size:.58rem; letter-spacing:2px;
+  text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px;
+}
+.inv-card-hd .ic { font-size:.85rem; }
+.inv-card-bd { padding:10px 12px; }
+
+/* Verdict card - compact */
+.inv-verdict-card.sev-high { border-color:rgba(255,64,96,.3); }
+.inv-verdict-card.sev-med  { border-color:rgba(255,204,0,.3); }
+.inv-verdict-card.sev-low  { border-color:rgba(0,255,159,.3); }
+
+.inv-verdict-row { display:flex; align-items:center; gap:12px; }
+.inv-sev-badge {
+  font-family:var(--mono); font-size:.58rem; letter-spacing:1.5px;
+  padding:3px 8px; border-radius:3px; border:1px solid; text-transform:uppercase; white-space:nowrap;
+}
+.inv-sev-badge.sev-high { color:var(--danger); border-color:rgba(255,64,96,.35); background:rgba(255,64,96,.1); }
+.inv-sev-badge.sev-med  { color:var(--warn);   border-color:rgba(255,204,0,.35); background:rgba(255,204,0,.08); }
+.inv-sev-badge.sev-low  { color:var(--safe);   border-color:rgba(0,255,159,.3);  background:rgba(0,255,159,.07); }
+.inv-score-display { margin-left:auto; text-align:right; font-family:var(--mono); }
+.inv-score-num { font-size:1.6rem; font-weight:700; color:var(--accent); line-height:1; }
+.inv-score-label { font-size:.55rem; letter-spacing:1.5px; color:var(--muted); }
+
+/* Summary - inline with verdict */
+.inv-summary { font-family:var(--mono); font-size:.7rem; line-height:1.55; color:var(--text); margin-top:8px; padding-top:8px; border-top:1px solid rgba(26,48,80,.4); }
+
+/* Category indicators - compact */
+.inv-cat { padding:8px 0; border-bottom:1px solid rgba(26,48,80,.35); }
+.inv-cat:last-child { border-bottom:none; }
+.inv-cat-row { display:flex; align-items:center; gap:6px; }
+.inv-cat-status {
+  font-family:var(--mono); font-size:.55rem; letter-spacing:1px;
+  padding:2px 6px; border-radius:2px; text-transform:uppercase; flex-shrink:0;
+}
+.inv-cat-status.detected { color:var(--danger); background:rgba(255,64,96,.08); border:1px solid rgba(255,64,96,.2); }
+.inv-cat-status.clear { color:var(--safe); background:rgba(0,255,159,.06); border:1px solid rgba(0,255,159,.18); }
+.inv-cat-name { font-family:var(--ui); font-weight:700; font-size:.78rem; letter-spacing:.3px; color:var(--text); }
+.inv-cat-pts { margin-left:auto; font-family:var(--mono); font-size:.62rem; color:var(--muted); flex-shrink:0; }
+.inv-cat-desc { font-family:var(--mono); font-size:.64rem; color:var(--muted); line-height:1.45; margin-top:3px; padding-left:2px; }
+
+/* Evidence - compact key-value */
+.inv-ev { display:flex; gap:6px; padding:5px 0; border-bottom:1px solid rgba(26,48,80,.3); font-family:var(--mono); font-size:.66rem; line-height:1.45; }
+.inv-ev:last-child { border-bottom:none; }
+.inv-ev-k { color:var(--muted); flex:0 0 80px; font-size:.56rem; letter-spacing:.5px; text-transform:uppercase; padding-top:1px; }
+.inv-ev-v { color:var(--text); word-break:break-all; min-width:0; }
+.inv-ev-v.flagged { color:var(--danger); }
+
+/* Actions - compact */
+.inv-act { display:flex; align-items:baseline; gap:6px; padding:5px 0; border-bottom:1px solid rgba(26,48,80,.3); font-family:var(--mono); font-size:.66rem; line-height:1.45; }
+.inv-act:last-child { border-bottom:none; }
+.inv-act-bullet { color:var(--accent); flex-shrink:0; font-size:.55rem; }
+.inv-act-text { color:var(--text); }
+.inv-act-sub { color:var(--muted); font-size:.58rem; }
+
+/* Mobile tightening */
+@media(max-width:800px){
+  .inv-panel { gap:8px; }
+  .inv-card-hd { padding:7px 10px; }
+  .inv-card-bd { padding:8px 10px; }
+  .inv-email-body { max-height:320px; padding:12px; font-size:.72rem; }
+  .inv-email-header { padding:8px 12px; }
+  .inv-score-num { font-size:1.4rem; }
+}
+
+footer { margin-top:50px; text-align:center; font-family:var(--mono); font-size:.62rem; color:var(--muted); letter-spacing:2px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo-row">
+      <span class="logo-icon">&#128737;</span>
+      <h1>PhishGuard</h1>
+    </div>
+    <div class="tagline">Email Phishing Detection - Assignment 1</div>
+    <div class="hbar"></div>
+  </header>
+
+  <div class="samples-section">
+    <div class="section-label">-- Try a sample email --</div>
+    <div class="samples-grid">
+      <div class="sample-card high" id="card-high" onclick="loadSample('high', this)">
+        <div class="sc-badge">HIGH RISK</div>
+        <div class="sc-title">Phishing - High Risk</div>
+        <div class="sc-desc">IP-based URL, spoofed domain with digit, urgent language</div>
+        <div class="sc-from">it-support@micr0soft-security-alerts.com</div>
+      </div>
+      <div class="sample-card med" id="card-med" onclick="loadSample('med', this)">
+        <div class="sc-badge">MEDIUM RISK</div>
+        <div class="sc-title">Phishing - Medium Risk</div>
+        <div class="sc-desc">Suspicious .xyz domain, mild urgency language</div>
+        <div class="sc-from">no-reply@drive-share-notify.com</div>
+      </div>
+      <div class="sample-card legit" id="card-legit" onclick="loadSample('legit', this)">
+        <div class="sc-badge">LEGITIMATE</div>
+        <div class="sc-title">Legitimate Email</div>
+        <div class="sc-desc">Known domain, no urgency, clean URLs</div>
+        <div class="sc-from">noreply@github.com</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="or-row">-- or upload / paste your own --</div>
+
+  <div class="upload-zone" id="uploadZone">
+    <span class="uz-icon">&#128194;</span>
+    <h3>Drop Email File Here</h3>
+    <p>Drag and drop a .txt file, or click to browse</p>
+    <input type="file" id="fileInput" accept=".txt" />
+  </div>
+
+  <div class="paste-section">
+    <div class="section-label">-- or paste email content --</div>
+    <textarea id="emailText" placeholder="Paste full email text here (including headers like From:, Subject:, etc.)"></textarea>
+  </div>
+
+  <button class="btn-scan" id="scanBtn" onclick="runScan()">Scan Email</button>
+
+  <div class="scanning" id="scanning">
+    <div>Scanning email content...</div>
+    <div class="scan-track"><div class="scan-fill"></div></div>
+    <div style="font-size:.65rem;color:var(--muted);letter-spacing:2px">Running checks</div>
+  </div>
+
+  <div id="results">
+    <div class="view-toggle">
+      <button class="view-btn active" id="viewStandard" onclick="switchView('standard')">Standard View</button>
+      <button class="view-btn" id="viewInvestigation" onclick="switchView('investigation')">Investigation Mode</button>
+    </div>
+
+    <div class="standard-view" id="standardView">
+      <div class="verdict-banner" id="verdictBanner">
+        <div class="vb-icon" id="verdictIcon"></div>
+        <div>
+          <div class="vb-label">VERDICT</div>
+          <div class="vb-verdict" id="verdictText"></div>
+        </div>
+        <div class="vb-score">
+          <div class="sc-num" id="scoreNum">0</div>
+          <div class="sc-sub">/ 10</div>
+          <div class="sc-brk" id="scoreBreakdown"></div>
+        </div>
+      </div>
+      <div class="result-body">
+        <div class="result-row"><span class="rr-key">Phishing score (1-10)</span><span class="rr-val" id="resScore"></span></div>
+        <div class="result-row"><span class="rr-key">Source address</span><span class="rr-val" id="resSource"></span></div>
+        <div class="result-row"><span class="rr-key">Detected indicators</span><span class="rr-val" id="resIndicators"></span></div>
+      </div>
+    </div>
+
+    <div class="investigation-view" id="investigationView"></div>
+    <button class="btn-reset" onclick="resetUI()">Scan another email</button>
+  </div>
+
+</div>
+<footer>PhishGuard - Security Analyst Assignment 1</footer>
+
+<script>
+var SAMPLES = {
+  high: 'From: it-support@micr0soft-security-alerts.com\nTo: user@company.com\nSubject: Urgent - Action required\n\nHi,\n\nWe detected unusual sign-in activity to your mailbox.\nAction required immediately to keep your account active.\n\nVerify now: http://185.23.45.67/login\n\nIf this was not you, change your password after verifying.\n\nIT Support',
+  med: 'From: no-reply@drive-share-notify.com\nTo: user@company.com\nSubject: Quick reminder - shared file\n\nHi,\n\nJust a quick reminder - I shared a file with you and it still shows as pending access.\nIf you have a minute, please review it today so it does not expire.\n\nFile: Q1 Budget Review\nOpen: https://drive-share-notify-support.xyz/q1-budget\n\nThanks,\nFinance Team',
+  legit: 'From: noreply@github.com\nTo: developer@company.com\nSubject: Your pull request was merged\n\nHi,\n\nYour pull request #412 was successfully merged into the main branch.\n\nPull Request: https://github.com/company/project/pull/412\nRepository: https://github.com/company/project\n\nThanks for contributing.\n\nGitHub'
+};
+
+var SUSPICIOUS_TLDS = ['.xyz', '.top', '.info', '.club', '.tk'];
+var URGENT_PHRASES  = ['urgent', 'immediately', 'action required', 'verify now', 'today', 'expire'];
+
+function extractSender(text) {
+  var m = text.match(/^from:\s*(?:.*<)?([^\s<>]+@[^\s<>]+)>?/im);
+  return m ? m[1].trim().toLowerCase() : 'Unknown';
+}
+
+function analyzeEmail(rawText) {
+  var text = rawText.toLowerCase();
+  var scores = [];
+  var indicators = [];
+  var categories = {
+    links:    { detected: false, score: 0, desc: '', evidence: [] },
+    sender:   { detected: false, score: 0, desc: '', evidence: [] },
+    language: { detected: false, score: 0, desc: '', evidence: [] }
+  };
+
+  // 1. Suspicious links (max 4)
+  var suspiciousUrls = [];
+  var urlMatches = text.match(/https?:\/\/[^\s<>"']+/g) || [];
+  for (var i = 0; i < urlMatches.length; i++) {
+    var url = urlMatches[i];
+    if (/https?:\/\/\d{1,3}(?:\.\d{1,3}){3}/.test(url)) {
+      suspiciousUrls.push(url + ' (raw IP)');
+      categories.links.evidence.push({ k: 'URL (IP)', v: url, flag: true });
+    } else if (SUSPICIOUS_TLDS.some(function(tld) { return url.indexOf(tld) !== -1; }) || (url.split('.').length - 1) > 3) {
+      suspiciousUrls.push(url + ' (uncommon domain)');
+      categories.links.evidence.push({ k: 'URL', v: url, flag: true });
+    }
+  }
+  if (suspiciousUrls.length > 0) {
+    scores.push(4);
+    indicators.push('Suspicious links: URL found including ' + suspiciousUrls.join(', '));
+    categories.links.detected = true;
+    categories.links.score = 4;
+    categories.links.desc = suspiciousUrls.length + ' suspicious URL(s) found';
+  } else {
+    categories.links.desc = 'No suspicious links';
+  }
+
+  // 2. Spoofed sender (max 3)
+  var sender = extractSender(rawText);
+  if (sender !== 'Unknown') {
+    var domain = sender.split('@').slice(-1)[0];
+    var hints = [];
+    if (/\d/.test(domain)) hints.push('digits in domain');
+    if (domain.indexOf('rn') !== -1) hints.push("lookalike 'rn'");
+    if ((domain.split('.').length - 1) > 2) hints.push('excessive subdomains');
+    if (hints.length > 0) {
+      scores.push(3);
+      indicators.push('Spoofed sender hints: ' + hints.join(', ') + ' (' + domain + ')');
+      categories.sender.detected = true;
+      categories.sender.score = 3;
+      categories.sender.desc = hints.join(', ');
+    } else {
+      categories.sender.desc = 'No spoofed sender patterns';
+    }
+    categories.sender.evidence.push({ k: 'Sender', v: sender, flag: false });
+    categories.sender.evidence.push({ k: 'Domain', v: domain, flag: categories.sender.detected });
+  } else {
+    categories.sender.desc = 'Sender not extracted';
+  }
+
+  // 3. Urgent language (max 3)
+  var foundPhrases = URGENT_PHRASES.filter(function(p) { return text.indexOf(p) !== -1; });
+  if (foundPhrases.length > 0) {
+    var langScore = Math.min(foundPhrases.length, 3);
+    scores.push(langScore);
+    var quoted = foundPhrases.map(function(p) { return '"' + p + '"'; });
+    indicators.push('Urgent language: matched ' + quoted.join(', '));
+    categories.language.detected = true;
+    categories.language.score = langScore;
+    categories.language.desc = 'Matched: ' + quoted.join(', ');
+    foundPhrases.forEach(function(p) { categories.language.evidence.push({ k: 'Phrase', v: p, flag: true }); });
+  } else {
+    categories.language.desc = 'No urgent language';
+  }
+
+  // Verdict
+  var totalScore = 0;
+  for (var s = 0; s < scores.length; s++) totalScore += scores[s];
+  var breakdown = scores.length > 0 ? scores.join('+') : '0';
+  var verdict;
+  if (totalScore >= 7) verdict = 'HIGH RISK PHISHING';
+  else if (totalScore >= 3) verdict = 'LIKELY PHISHING';
+  else verdict = 'NOT LIKELY PHISHING';
+
+  return { sender: sender, indicators: indicators, totalScore: totalScore, breakdown: breakdown, verdict: verdict, categories: categories, rawText: rawText };
+}
+
+var currentResult = null;
+
+function switchView(mode) {
+  var stdBtn = document.getElementById('viewStandard');
+  var invBtn = document.getElementById('viewInvestigation');
+  var stdView = document.getElementById('standardView');
+  var invView = document.getElementById('investigationView');
+  if (mode === 'standard') {
+    stdBtn.classList.add('active'); invBtn.classList.remove('active');
+    stdView.classList.remove('hidden'); invView.classList.remove('visible');
+  } else {
+    invBtn.classList.add('active'); stdBtn.classList.remove('active');
+    stdView.classList.add('hidden'); invView.classList.add('visible');
+    if (currentResult) renderInvestigation(currentResult);
+  }
+}
+
+function loadSample(key, card) {
+  document.getElementById('emailText').value = SAMPLES[key];
+  var cards = document.querySelectorAll('.sample-card');
+  for (var i = 0; i < cards.length; i++) cards[i].classList.remove('active');
+  card.classList.add('active');
+  document.getElementById('scanBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(runScan, 380);
+}
+
+function runScan() {
+  var text = document.getElementById('emailText').value.trim();
+  if (!text) { alert('Please paste email content or select a sample.'); return; }
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('scanBtn').style.display = 'none';
+  document.getElementById('scanning').classList.add('on');
+  setTimeout(function() {
+    var r = analyzeEmail(text);
+    currentResult = r;
+    document.getElementById('scanning').classList.remove('on');
+    document.getElementById('scanBtn').style.display = 'block';
+    renderResults(r);
+    switchView('standard');
+  }, 700);
+}
+
+function renderResults(r) {
+  var banner = document.getElementById('verdictBanner');
+  var isClean = r.verdict === 'NOT LIKELY PHISHING';
+  banner.className = 'verdict-banner ' + (isClean ? 'safe' : 'phishing');
+  document.getElementById('verdictIcon').textContent = isClean ? 'OK' : '!!';
+  document.getElementById('verdictText').textContent = r.verdict;
+  document.getElementById('scoreNum').textContent = r.totalScore;
+  document.getElementById('scoreBreakdown').textContent = '(' + r.breakdown + ')';
+  document.getElementById('resScore').textContent = r.totalScore + ' (' + r.breakdown + ')';
+  document.getElementById('resSource').textContent = r.sender;
+
+  var indEl = document.getElementById('resIndicators');
+  var ul = document.createElement('ul');
+  ul.className = 'ind-list';
+  var lines = r.indicators.slice();
+  if (!r.categories.links.detected) lines.push('No suspicious links found');
+  if (!r.categories.sender.detected) lines.push('No spoofed sender hints found');
+  if (!r.categories.language.detected) lines.push('No urgent language found');
+  for (var i = 0; i < lines.length; i++) {
+    var li = document.createElement('li');
+    li.innerHTML = '<span class="ind-dot">&#9658;</span><span>' + esc(lines[i]) + '</span>';
+    ul.appendChild(li);
+  }
+  indEl.innerHTML = '';
+  indEl.appendChild(ul);
+  document.getElementById('results').style.display = 'block';
+}
+
+// === INVESTIGATION MODE ===
+
+function generateSummary(r) {
+  var cats = [];
+  if (r.categories.links.detected) cats.push('suspicious links');
+  if (r.categories.sender.detected) cats.push('spoofed sender');
+  if (r.categories.language.detected) cats.push('urgency cues');
+  if (cats.length === 0) return 'No major phishing indicators detected.';
+  var pre = r.totalScore >= 7 ? 'High-confidence phishing' : r.totalScore >= 3 ? 'Likely phishing attempt' : 'Low-risk email';
+  return pre + ' using ' + cats.join(', ') + '.';
+}
+
+function sevClass(r) {
+  return r.totalScore >= 7 ? 'sev-high' : r.totalScore >= 3 ? 'sev-med' : 'sev-low';
+}
+
+function getActions(r) {
+  if (r.totalScore >= 7) return [
+    { t: 'Block sender domain', s: 'Prevent further delivery' },
+    { t: 'Quarantine email', s: 'Remove from inboxes' },
+    { t: 'Alert affected users', s: 'Warn recipients' },
+    { t: 'Submit IOCs to threat intel', s: 'Enable broader protection' },
+    { t: 'Search mail logs for similar', s: 'Identify campaign scope' }
+  ];
+  if (r.totalScore >= 3) {
+    var a = [
+      { t: 'Review sender domain', s: 'Validate legitimacy' },
+      { t: 'Escalate for analyst review', s: 'Manual investigation needed' },
+      { t: 'Warn end users', s: 'Reduce click risk' }
+    ];
+    if (r.categories.links.detected) a.push({ t: 'Block flagged URL at proxy', s: 'Prevent access' });
+    return a;
+  }
+  return [
+    { t: 'No action required', s: 'Email appears clean' },
+    { t: 'Continue monitoring', s: 'Standard mail flow' }
+  ];
+}
+
+function parseHeaders(raw) {
+  var h = { from: '', to: '', subject: '' };
+  raw.split('\n').forEach(function(l) {
+    if (/^from:\s*/i.test(l)) h.from = l.replace(/^from:\s*/i, '').trim();
+    if (/^to:\s*/i.test(l)) h.to = l.replace(/^to:\s*/i, '').trim();
+    if (/^subject:\s*/i.test(l)) h.subject = l.replace(/^subject:\s*/i, '').trim();
+  });
+  return h;
+}
+
+function getBody(raw) {
+  var lines = raw.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === '') return lines.slice(i + 1).join('\n').trim();
+    if (!/^(from|to|subject|date|reply-to|cc|bcc):\s*/i.test(lines[i])) return lines.slice(i).join('\n').trim();
+  }
+  return raw;
+}
+
+function highlightBody(body, r) {
+  var h = esc(body);
+  h = h.replace(/(https?:\/\/[^\s<>"']+)/g, function(m) {
+    var sus = r.categories.links.evidence.some(function(ev) { return m.toLowerCase().indexOf(ev.v.toLowerCase()) !== -1; });
+    return sus ? '<span class="hl-link">' + m + '</span>' : m;
+  });
+  URGENT_PHRASES.forEach(function(p) {
+    h = h.replace(new RegExp('(' + p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<span class="hl-urgent">$1</span>');
+  });
+  return h;
+}
+
+function renderInvestigation(r) {
+  var el = document.getElementById('investigationView');
+  var hd = parseHeaders(r.rawText);
+  var body = getBody(r.rawText);
+  var sv = sevClass(r);
+  var actions = getActions(r);
+
+  // Collect all evidence (no duplication with indicators)
+  var evItems = [];
+  if (r.sender !== 'Unknown') {
+    evItems.push({ k: 'Sender', v: r.sender, f: false });
+    evItems.push({ k: 'Domain', v: r.sender.split('@').slice(-1)[0], f: r.categories.sender.detected });
+  }
+  ['links', 'sender', 'language'].forEach(function(cat) {
+    r.categories[cat].evidence.forEach(function(ev) {
+      if (ev.k !== 'Sender' && ev.k !== 'Domain') evItems.push(ev);
+    });
+  });
+
+  var html = '<div class="inv-layout">';
+
+  // LEFT: email
+  html += '<div class="inv-email">';
+  html += '<div class="inv-email-header">';
+  html += '<div class="inv-email-header-row"><span class="inv-hdr-key">From</span><span class="inv-hdr-val">' + esc(hd.from) + '</span></div>';
+  html += '<div class="inv-email-header-row"><span class="inv-hdr-key">To</span><span class="inv-hdr-val">' + esc(hd.to) + '</span></div>';
+  html += '<div class="inv-email-header-row"><span class="inv-hdr-key">Subj</span><span class="inv-hdr-val">' + esc(hd.subject) + '</span></div>';
+  html += '</div>';
+  html += '<div class="inv-email-body">' + highlightBody(body, r) + '</div></div>';
+
+  // RIGHT: panel
+  html += '<div class="inv-panel">';
+
+  // 1. Verdict + Summary (merged into one card)
+  html += '<div class="inv-card inv-verdict-card ' + sv + '">';
+  html += '<div class="inv-card-hd"><span class="ic">&#9888;</span> Verdict</div>';
+  html += '<div class="inv-card-bd">';
+  html += '<div class="inv-verdict-row">';
+  html += '<div class="inv-sev-badge ' + sv + '">' + esc(r.verdict) + '</div>';
+  html += '<div class="inv-score-display"><div class="inv-score-num">' + r.totalScore + '</div><div class="inv-score-label">/ 10 (' + r.breakdown + ')</div></div>';
+  html += '</div>';
+  html += '<div class="inv-summary">' + esc(generateSummary(r)) + '</div>';
+  html += '</div></div>';
+
+  // 2. Indicators (interpretation only, no raw evidence)
+  html += '<div class="inv-card">';
+  html += '<div class="inv-card-hd"><span class="ic">&#128200;</span> Indicators</div>';
+  html += '<div class="inv-card-bd">';
+
+  var catMap = [
+    { key: 'links', label: 'Suspicious Links' },
+    { key: 'sender', label: 'Sender Analysis' },
+    { key: 'language', label: 'Language Analysis' }
+  ];
+  catMap.forEach(function(c) {
+    var d = r.categories[c.key];
+    var st = d.detected ? 'detected' : 'clear';
+    var sl = d.detected ? 'DETECTED' : 'CLEAR';
+    var pt = d.detected ? '+' + d.score : '0';
+    html += '<div class="inv-cat">';
+    html += '<div class="inv-cat-row"><span class="inv-cat-status ' + st + '">' + sl + '</span><span class="inv-cat-name">' + c.label + '</span><span class="inv-cat-pts">' + pt + '</span></div>';
+    html += '<div class="inv-cat-desc">' + esc(d.desc) + '</div>';
+    html += '</div>';
+  });
+
+  html += '</div></div>';
+
+  // 3. Evidence (raw artifacts only)
+  if (evItems.length > 0) {
+    html += '<div class="inv-card">';
+    html += '<div class="inv-card-hd"><span class="ic">&#128269;</span> Evidence</div>';
+    html += '<div class="inv-card-bd">';
+    evItems.forEach(function(ev) {
+      html += '<div class="inv-ev"><span class="inv-ev-k">' + esc(ev.k) + '</span><span class="inv-ev-v' + (ev.f ? ' flagged' : '') + '">' + esc(ev.v) + '</span></div>';
+    });
+    html += '</div></div>';
+  }
+
+  // 4. Actions
+  html += '<div class="inv-card">';
+  html += '<div class="inv-card-hd"><span class="ic">&#128736;</span> Actions</div>';
+  html += '<div class="inv-card-bd">';
+  actions.forEach(function(a) {
+    html += '<div class="inv-act"><span class="inv-act-bullet">&#9654;</span><span class="inv-act-text">' + esc(a.t) + '</span> <span class="inv-act-sub">' + esc(a.s) + '</span></div>';
+  });
+  html += '</div></div>';
+
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+function resetUI() {
+  document.getElementById('emailText').value = '';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('investigationView').innerHTML = '';
+  currentResult = null;
+  switchView('standard');
+  var cards = document.querySelectorAll('.sample-card');
+  for (var i = 0; i < cards.length; i++) cards[i].classList.remove('active');
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+var uploadZone = document.getElementById('uploadZone');
+var fileInput  = document.getElementById('fileInput');
+function readFile(f) { var r = new FileReader(); r.onload = function(e) { document.getElementById('emailText').value = e.target.result; }; r.readAsText(f); }
+uploadZone.addEventListener('click', function() { fileInput.click(); });
+fileInput.addEventListener('change', function(e) { if (e.target.files[0]) readFile(e.target.files[0]); });
+uploadZone.addEventListener('dragover', function(e) { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', function() { uploadZone.classList.remove('drag-over'); });
+uploadZone.addEventListener('drop', function(e) { e.preventDefault(); uploadZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]); });
+</script>
+</body>
+</html>

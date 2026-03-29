@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SentinelView - Threat Detection Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128737;</text></svg>">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0c0e14;--bg2:#111520;--bg3:#161b27;--surface:#1a2030;--surface2:#1f2638;--surface3:#252d40;
+--border:#232d3f;--border2:#2c3850;--border3:#364560;
+--indigo:#7c85f5;--indigo-dk:#6366f1;--indigo-bg:rgba(124,133,245,.06);--indigo-border:rgba(124,133,245,.18);
+--high:#f87171;--high-bg:rgba(248,113,113,.07);--high-border:rgba(248,113,113,.2);
+--med:#fbbf24;--med-bg:rgba(251,191,36,.06);--med-border:rgba(251,191,36,.16);
+--low:#34d399;--low-bg:rgba(52,211,153,.06);--low-border:rgba(52,211,153,.16);
+--text:#f0f2f7;--text2:#a0a8bc;--text3:#6b7490;--text4:#4a5268;
+--sans:'Plus Jakarta Sans',system-ui,sans-serif;--mono:'Fira Code',monospace;
+--r:8px;--r-lg:12px;--r-xl:16px;
+--shadow:0 4px 16px rgba(0,0,0,.35),0 1px 4px rgba(0,0,0,.2)
+}
+html{scroll-behavior:smooth}
+body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5;overflow-x:hidden}
+
+/* HEADER */
+.hdr{background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:60}
+.hdr-in{max-width:1400px;margin:0 auto;padding:0 28px;display:flex;align-items:center;height:60px}
+.hdr-brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+.hdr-logo{width:36px;height:36px;background:linear-gradient(135deg,#818cf8,#6366f1);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(99,102,241,.35)}
+.hdr-logo svg{width:20px;height:20px}
+.hdr-name{font-weight:800;font-size:1.05rem;color:var(--text);letter-spacing:-.3px}
+.hdr-sub{font-size:.68rem;color:var(--text4);margin-top:-2px;font-weight:500}
+.hdr-right{display:flex;align-items:center;gap:14px}
+.hdr-live{display:flex;align-items:center;gap:7px;font-size:.75rem;color:var(--text2);font-weight:600;padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:20px}
+.pulse{width:8px;height:8px;background:var(--low);border-radius:50%;position:relative}
+.pulse::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--low);animation:rpl 2s infinite}
+@keyframes rpl{0%{transform:scale(1);opacity:.5}100%{transform:scale(2);opacity:0}}
+.hdr-clock{font-family:var(--mono);font-size:.72rem;color:var(--text4)}
+@media(max-width:640px){.hdr-sub,.hdr-clock{display:none}.hdr-in{padding:0 16px}}
+
+/* LAYOUT */
+.main{max-width:1400px;margin:0 auto;padding:28px;display:flex;gap:0;position:relative}
+.content{flex:1;min-width:0;transition:margin-right .3s ease}
+.content.shifted{margin-right:420px}
+@media(max-width:1100px){.content.shifted{margin-right:0}}
+@media(max-width:640px){.main{padding:16px}}
+
+/* STATS ROW */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:900px){.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.stats{grid-template-columns:1fr}}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;transition:all .2s;cursor:default;position:relative;overflow:hidden}
+.stat:hover{border-color:var(--border2);box-shadow:var(--shadow);transform:translateY(-2px)}
+.stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.stat-label{font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.stat-icon{width:36px;height:36px;border-radius:var(--r);display:flex;align-items:center;justify-content:center}
+.stat.total .stat-icon{background:var(--indigo-bg);border:1px solid var(--indigo-border);color:var(--indigo)}
+.stat.hi .stat-icon{background:var(--high-bg);border:1px solid var(--high-border);color:var(--high)}
+.stat.me .stat-icon{background:var(--med-bg);border:1px solid var(--med-border);color:var(--med)}
+.stat.lo .stat-icon{background:var(--low-bg);border:1px solid var(--low-border);color:var(--low)}
+.stat-icon svg{width:18px;height:18px}
+.stat-num{font-family:var(--mono);font-size:2rem;font-weight:700;line-height:1;letter-spacing:-1px}
+.stat.total .stat-num{color:var(--indigo)}.stat.hi .stat-num{color:var(--high)}
+.stat.me .stat-num{color:var(--med)}.stat.lo .stat-num{color:var(--low)}
+.stat-spark{margin-top:8px}
+.stat-spark canvas{display:block;width:100%;height:24px}
+
+/* CHARTS ROW */
+.charts{display:grid;grid-template-columns:200px 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:700px){.charts{grid-template-columns:1fr}}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;transition:box-shadow .2s}
+.chart-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.chart-title{font-size:.68rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px}
+.donut-wrap{display:flex;flex-direction:column;align-items:center}
+.donut-legend{margin-top:12px;width:100%}
+.dl-r{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.72rem;color:var(--text2)}
+.dl-d{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.dl-v{margin-left:auto;font-family:var(--mono);font-weight:600;color:var(--text)}
+.timeline-wrap{position:relative;height:100%;min-height:120px}
+.timeline-wrap canvas{width:100%!important;height:100%!important;display:block}
+
+/* SEV BAR */
+.sev-bar{display:flex;height:4px;border-radius:2px;overflow:hidden;margin-bottom:24px;background:var(--border)}
+.sev-bar div{transition:width .6s ease}
+.sev-bar .bh{background:var(--high)}.sev-bar .bm{background:var(--med)}.sev-bar .bl{background:var(--low)}
+
+/* TABS + CONTROLS */
+.ctrl-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.tabs{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:3px;margin-right:auto}
+.tab{font-family:var(--sans);font-size:.78rem;font-weight:600;padding:7px 16px;border-radius:6px;border:none;background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.tab:hover{color:var(--text)}
+.tab.on{background:var(--surface2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.tab-badge{font-family:var(--mono);font-size:.6rem;padding:1px 6px;border-radius:10px;background:var(--border);color:var(--text3)}
+.tab.on .tab-badge{background:var(--indigo-bg);color:var(--indigo);border:1px solid var(--indigo-border)}
+.search-wrap{position:relative;width:240px}
+@media(max-width:700px){.search-wrap{width:100%;order:10}}
+.search-wrap input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:9px 14px 9px 36px;font-family:var(--sans);font-size:.82rem;color:var(--text);outline:none;transition:all .15s}
+.search-wrap input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px var(--indigo-bg)}
+.search-wrap input::placeholder{color:var(--text4)}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text4)}
+.view-toggle{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:2px}
+.vt-btn{width:32px;height:32px;border:none;background:transparent;border-radius:6px;color:var(--text4);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.vt-btn.on{background:var(--surface2);color:var(--text)}
+.vt-btn:hover{color:var(--text)}
+
+/* ALERT CARDS */
+.alerts-grid{display:flex;flex-direction:column;gap:8px}
+.group-header{padding:10px 0 6px;display:flex;align-items:center;gap:8px}
+.gh-dot{width:8px;height:8px;border-radius:2px}
+.gh-dot.h{background:var(--high)}.gh-dot.m{background:var(--med)}.gh-dot.l{background:var(--low)}
+.gh-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.group-header.h .gh-label{color:var(--high)}.group-header.m .gh-label{color:var(--med)}.group-header.l .gh-label{color:var(--low)}
+.gh-count{font-family:var(--mono);font-size:.62rem;color:var(--text4);padding:1px 8px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)}
+.gh-collapse{margin-left:auto;background:none;border:none;color:var(--text4);cursor:pointer;font-size:.7rem;font-family:var(--sans);display:flex;align-items:center;gap:4px;transition:color .12s}
+.gh-collapse:hover{color:var(--text2)}
+
+.a-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;cursor:pointer;transition:all .18s;display:flex;gap:14px;align-items:flex-start;position:relative;overflow:hidden}
+.a-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+.a-card.high::before{background:var(--high)}.a-card.medium::before{background:var(--med)}.a-card.low::before{background:var(--low)}
+.a-card:hover{border-color:var(--border2);background:var(--surface2);transform:translateX(2px)}
+.a-card.sel{border-color:var(--indigo-border);background:rgba(124,133,245,.05)}
+.a-sev{flex-shrink:0;width:28px;height:28px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;margin-top:1px}
+.a-card.high .a-sev{background:var(--high-bg);border:1px solid var(--high-border);color:var(--high)}
+.a-card.medium .a-sev{background:var(--med-bg);border:1px solid var(--med-border);color:var(--med)}
+.a-card.low .a-sev{background:var(--low-bg);border:1px solid var(--low-border);color:var(--low)}
+.a-body{flex:1;min-width:0}
+.a-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.a-id{font-family:var(--mono);font-size:.68rem;color:var(--text4)}
+.a-status{font-size:.62rem;font-weight:600;padding:2px 8px;border-radius:10px;display:inline-flex;align-items:center;gap:4px}
+.a-status.open{color:var(--high);background:var(--high-bg);border:1px solid var(--high-border)}
+.a-status.investigating{color:var(--med);background:var(--med-bg);border:1px solid var(--med-border)}
+.a-status.resolved{color:var(--low);background:var(--low-bg);border:1px solid var(--low-border)}
+.a-status .sd{width:4px;height:4px;border-radius:50%}
+.a-status.open .sd{background:var(--high);animation:stP 2s infinite}
+@keyframes stP{0%,100%{opacity:1}50%{opacity:.3}}
+.a-status.investigating .sd{background:var(--med)}.a-status.resolved .sd{background:var(--low)}
+.a-event{font-weight:700;font-size:.92rem;color:var(--text);margin-bottom:3px;letter-spacing:-.1px}
+.a-desc{font-size:.78rem;color:var(--text3);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.a-meta{display:flex;gap:14px;margin-top:8px;flex-wrap:wrap}
+.a-meta-item{display:flex;align-items:center;gap:4px;font-size:.7rem;color:var(--text4)}
+.a-meta-item svg{width:12px;height:12px;flex-shrink:0}
+
+.show-more{text-align:center;padding:16px}
+.btn-more{font-family:var(--sans);font-size:.82rem;font-weight:600;color:var(--indigo);background:var(--indigo-bg);border:1px solid var(--indigo-border);padding:10px 28px;border-radius:var(--r);cursor:pointer;transition:all .15s}
+.btn-more:hover{background:rgba(124,133,245,.12);border-color:var(--indigo)}
+
+/* TABLE VIEW */
+.tbl-view{display:none}
+.tbl-view.on{display:block}
+.cards-view.on{display:flex}
+.tbl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.tbl-scroll{overflow-x:auto;max-height:520px;overflow-y:auto}
+.tbl{width:100%;border-collapse:collapse;min-width:780px}
+.tbl th{font-size:.64rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;text-align:left;padding:11px 14px;background:var(--bg3);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;cursor:pointer;user-select:none;transition:color .1s;white-space:nowrap}
+.tbl th:hover{color:var(--indigo)}
+.tbl th .sa{font-size:.5rem;margin-left:3px;color:var(--text4)}
+.tbl th.sorted .sa{color:var(--indigo)}
+.tbl td{font-size:.8rem;padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text2);transition:background .08s}
+.tbl tbody tr{cursor:pointer;transition:all .1s}
+.tbl tbody tr:nth-child(even){background:rgba(255,255,255,.012)}
+.tbl tbody tr:hover{background:var(--indigo-bg)}
+.tbl tbody tr.sel{background:rgba(124,133,245,.08);box-shadow:inset 3px 0 0 var(--indigo)}
+.tbl tbody tr:last-child td{border-bottom:none}
+.t-id{font-family:var(--mono);font-size:.72rem;color:var(--text4)}
+.t-evt{font-weight:600;color:var(--text)}
+.t-mono{font-family:var(--mono);font-size:.72rem;color:var(--text3)}
+.sev-pill{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:20px}
+.sev-pill.high{color:var(--high);background:var(--high-bg);border:1px solid var(--high-border)}
+.sev-pill.medium{color:var(--med);background:var(--med-bg);border:1px solid var(--med-border)}
+.sev-pill.low{color:var(--low);background:var(--low-bg);border:1px solid var(--low-border)}
+.sev-pill .sd{width:5px;height:5px;border-radius:50%}
+.sev-pill.high .sd{background:var(--high)}.sev-pill.medium .sd{background:var(--med)}.sev-pill.low .sd{background:var(--low)}
+.st-t{display:inline-flex;align-items:center;gap:5px;font-size:.72rem}
+.st-t .sd{width:6px;height:6px;border-radius:50%}
+.st-t.open .sd{background:var(--high);animation:stP 2s infinite}
+.st-t.investigating .sd{background:var(--med)}.st-t.resolved .sd{background:var(--low)}
+.empty-msg{text-align:center;padding:48px;color:var(--text4);font-size:.85rem}
+
+/* SIDE PANEL */
+.side-panel{position:fixed;top:60px;right:0;bottom:0;width:420px;background:var(--bg2);border-left:1px solid var(--border);z-index:55;transform:translateX(100%);transition:transform .3s ease;overflow-y:auto;box-shadow:-4px 0 24px rgba(0,0,0,.3)}
+.side-panel.open{transform:translateX(0)}
+@media(max-width:1100px){.side-panel{width:100%;max-width:480px}}
+@media(max-width:640px){.side-panel{width:100%}}
+.sp-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg2);z-index:2}
+.sp-sev{font-size:.65rem;font-weight:700;padding:3px 10px;border-radius:20px}
+.sp-sev.high{color:var(--high);background:var(--high-bg);border:1px solid var(--high-border)}
+.sp-sev.medium{color:var(--med);background:var(--med-bg);border:1px solid var(--med-border)}
+.sp-sev.low{color:var(--low);background:var(--low-bg);border:1px solid var(--low-border)}
+.sp-title{flex:1;font-weight:700;font-size:1rem;color:var(--text);letter-spacing:-.2px}
+.sp-close{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--text3);cursor:pointer;transition:all .12s}
+.sp-close:hover{border-color:var(--border2);color:var(--text)}
+.sp-body{padding:22px}
+.sp-sec{margin-bottom:22px}.sp-sec:last-child{margin-bottom:0}
+.sp-sec-t{font-size:.68rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
+.sp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sp-cell{padding:10px 14px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border)}
+.sp-cell.wide{grid-column:1/-1}
+.sp-k{font-size:.6rem;font-weight:600;color:var(--text4);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.sp-v{font-size:.8rem;color:var(--text);line-height:1.55}
+.sp-v.mono{font-family:var(--mono);font-size:.76rem;color:var(--text2)}
+.sp-warn{padding:16px;background:var(--high-bg);border-left:3px solid var(--high);border-radius:0 var(--r) var(--r) 0;font-size:.8rem;color:var(--text2);line-height:1.7}
+.sp-action{padding:16px;background:var(--low-bg);border-left:3px solid var(--low);border-radius:0 var(--r) var(--r) 0;font-size:.8rem;color:var(--text2);line-height:1.7}
+.sp-foot{padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px;position:sticky;bottom:0;background:var(--bg2)}
+.btn-dis{flex:1;font-family:var(--sans);font-size:.8rem;font-weight:600;padding:10px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);color:var(--text3);cursor:pointer;transition:all .12s}
+.btn-dis:hover{border-color:var(--border2);color:var(--text)}
+.btn-esc{flex:1;font-family:var(--sans);font-size:.8rem;font-weight:700;padding:10px;border-radius:var(--r);border:none;background:var(--indigo-dk);color:#fff;cursor:pointer;transition:all .12s;box-shadow:0 2px 6px rgba(99,102,241,.3)}
+.btn-esc:hover{background:var(--indigo);box-shadow:0 4px 12px rgba(99,102,241,.35)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface3);border:1px solid var(--border2);border-radius:var(--r);padding:12px 22px;display:flex;align-items:center;gap:10px;font-size:.82rem;font-weight:600;color:var(--text);box-shadow:0 8px 28px rgba(0,0,0,.4);opacity:0;transition:all .3s ease;z-index:300}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast svg{color:var(--low);flex-shrink:0}
+.kb-hint{text-align:center;margin-top:18px;font-size:.66rem;color:var(--text4)}
+.kb-hint kbd{font-family:var(--mono);font-size:.58rem;background:var(--surface);border:1px solid var(--border);padding:2px 6px;border-radius:3px;margin:0 1px}
+</style>
+</head>
+<body>
+
+<header class="hdr"><div class="hdr-in">
+<div class="hdr-brand"><div class="hdr-logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4" opacity=".7"/></svg></div><div><div class="hdr-name">SentinelView</div><div class="hdr-sub">Threat Detection & Response</div></div></div>
+<div class="hdr-right"><div class="hdr-live"><span class="pulse"></span><span>Live</span></div><div class="hdr-clock" id="clock">--:--:--</div></div>
+</div></header>
+
+<div class="main"><div class="content" id="content">
+
+<div class="stats">
+<div class="stat total"><div class="stat-top"><span class="stat-label">Total Alerts</span><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div></div><div class="stat-num" id="cT">0</div><div class="stat-spark"><canvas id="spT"></canvas></div></div>
+<div class="stat hi"><div class="stat-top"><span class="stat-label">High Severity</span><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r=".5"/></svg></div></div><div class="stat-num" id="cH">0</div><div class="stat-spark"><canvas id="spH"></canvas></div></div>
+<div class="stat me"><div class="stat-top"><span class="stat-label">Medium Severity</span><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r=".5"/></svg></div></div><div class="stat-num" id="cM">0</div><div class="stat-spark"><canvas id="spM"></canvas></div></div>
+<div class="stat lo"><div class="stat-top"><span class="stat-label">Low Severity</span><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg></div></div><div class="stat-num" id="cL">0</div><div class="stat-spark"><canvas id="spL"></canvas></div></div>
+</div>
+
+<div class="charts">
+<div class="chart-card"><div class="chart-title">Distribution</div><div class="donut-wrap"><canvas id="donut" width="140" height="140"></canvas><div class="donut-legend" id="dLeg"></div></div></div>
+<div class="chart-card"><div class="chart-title">Alerts Timeline (24h)</div><div class="timeline-wrap"><canvas id="timeline"></canvas></div></div>
+</div>
+
+<div class="sev-bar"><div class="bh" id="barH"></div><div class="bm" id="barM"></div><div class="bl" id="barL"></div></div>
+
+<div class="ctrl-row">
+<div class="tabs" id="tabs">
+<button class="tab on" data-f="all">All<span class="tab-badge" id="tbAll">25</span></button>
+<button class="tab" data-f="High">High<span class="tab-badge" id="tbHi">10</span></button>
+<button class="tab" data-f="Medium">Medium<span class="tab-badge" id="tbMe">10</span></button>
+<button class="tab" data-f="Low">Low<span class="tab-badge" id="tbLo">5</span></button>
+</div>
+<div class="search-wrap"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="sIn" placeholder="Search events, users, IPs..." autocomplete="off"></div>
+<div class="view-toggle">
+<button class="vt-btn on" id="vtCards" title="Card view"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+<button class="vt-btn" id="vtTable" title="Table view"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+</div>
+</div>
+
+<div class="alerts-grid cards-view on" id="cardsView"></div>
+<div class="tbl-view" id="tblView"><div class="tbl-card"><div class="tbl-scroll"><table class="tbl"><thead><tr>
+<th data-col="id">ID<span class="sa">&#9650;</span></th>
+<th data-col="eventType">Event<span class="sa">&#9650;</span></th>
+<th data-col="user">User<span class="sa">&#9650;</span></th>
+<th data-col="ipAddress">Source IP<span class="sa">&#9650;</span></th>
+<th data-col="time">Time<span class="sa">&#9650;</span></th>
+<th data-col="riskLevel">Severity<span class="sa">&#9650;</span></th>
+<th data-col="status">Status<span class="sa">&#9650;</span></th>
+</tr></thead><tbody id="tbody"></tbody></table></div><div class="empty-msg" id="emptyMsg" style="display:none">No alerts match your criteria</div></div></div>
+
+<div class="kb-hint"><kbd>J</kbd><kbd>K</kbd> navigate &nbsp; <kbd>Enter</kbd> investigate &nbsp; <kbd>Esc</kbd> close</div>
+</div></div>
+
+<div class="side-panel" id="sPanel">
+<div class="sp-head"><span class="sp-sev" id="spSev"></span><div class="sp-title" id="spTitle"></div><button class="sp-close" id="spClose"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg></button></div>
+<div class="sp-body">
+<div class="sp-sec"><div class="sp-sec-t">Event Details</div><div class="sp-grid">
+<div class="sp-cell"><div class="sp-k">Alert ID</div><div class="sp-v mono" id="spId"></div></div>
+<div class="sp-cell"><div class="sp-k">Event Type</div><div class="sp-v" id="spEvt"></div></div>
+<div class="sp-cell"><div class="sp-k">User</div><div class="sp-v" id="spUsr"></div></div>
+<div class="sp-cell"><div class="sp-k">Source IP</div><div class="sp-v mono" id="spIp"></div></div>
+<div class="sp-cell"><div class="sp-k">Timestamp</div><div class="sp-v mono" id="spTime"></div></div>
+<div class="sp-cell"><div class="sp-k">Asset</div><div class="sp-v" id="spAsset"></div></div>
+<div class="sp-cell wide"><div class="sp-k">Description</div><div class="sp-v" id="spDesc"></div></div>
+</div></div>
+<div class="sp-sec"><div class="sp-sec-t">Why This Is Suspicious</div><div class="sp-warn" id="spWhy"></div></div>
+<div class="sp-sec"><div class="sp-sec-t">Recommended Action</div><div class="sp-action" id="spAct"></div></div>
+</div>
+<div class="sp-foot"><button class="btn-dis" id="btnDis">Dismiss</button><button class="btn-esc" id="btnEsc">Escalate to Tier 2</button></div>
+</div>
+
+<div class="toast" id="toast"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span id="tMsg"></span></div>
+
+<script>
+const alerts = [
+    // HIGH SEVERITY (10)
+    {
+        id: "ALT-0901",
+        eventType: "Multiple Failed Login Attempts",
+        user: "j.martinez",
+        ipAddress: "203.0.113.42",
+        time: "2026-03-20 02:14:33",
+        riskLevel: "High",
+        status: "Open",
+        asset: "AD-DC01 (Domain Controller)",
+        description: "47 failed login attempts detected for user j.martinez within a 3-minute window against the primary domain controller.",
+        whySuspicious: "The volume and speed of attempts strongly indicate an automated brute-force or credential-stuffing attack rather than a user mistyping a password.",
+        recommendedAction: "Lock the affected account immediately. Validate source IP reputation and check if the IP appears in threat intelligence feeds. Review authentication logs for lateral movement attempts. Enforce MFA if not already enabled."
+    },
+    {
+        id: "ALT-0902",
+        eventType: "Login from Suspicious Country",
+        user: "a.chen",
+        ipAddress: "185.220.101.9",
+        time: "2026-03-20 03:47:12",
+        riskLevel: "High",
+        status: "Open",
+        asset: "VPN Gateway (vpn-edge-01)",
+        description: "Successful VPN login from an IP geolocated to a region with no known business operations. User a.chen is based in the US.",
+        whySuspicious: "The login origin does not match the user's established geographic pattern. The IP is associated with a known Tor exit node relay, suggesting possible identity masking.",
+        recommendedAction: "Terminate the active VPN session. Contact the user directly to verify whether the login is legitimate. Block the IP range at the firewall and review the account for any data access during the session."
+    },
+    {
+        id: "ALT-0903",
+        eventType: "Access to Restricted File",
+        user: "d.kowalski",
+        ipAddress: "10.12.5.88",
+        time: "2026-03-19 23:58:01",
+        riskLevel: "High",
+        status: "Investigating",
+        asset: "FileServer-HR (fs-hr-03)",
+        description: "User d.kowalski from the Engineering team accessed a restricted HR directory containing salary and personnel records outside normal business hours.",
+        whySuspicious: "This user has no business justification for accessing HR files. The access occurred late at night, which deviates from normal working patterns for this account.",
+        recommendedAction: "Review the full access log for d.kowalski on fs-hr-03. Interview the user or their manager to determine intent. Restrict file permissions and enable DLP alerting on the directory."
+    },
+    {
+        id: "ALT-0904",
+        eventType: "Possible Data Exfiltration",
+        user: "m.thompson",
+        ipAddress: "10.8.22.140",
+        time: "2026-03-20 01:22:45",
+        riskLevel: "High",
+        status: "Open",
+        asset: "WKS-DEV-077 (Developer Workstation)",
+        description: "A sustained outbound data transfer of 4.7 GB was detected from m.thompson's workstation to an external cloud storage endpoint not approved by the organization.",
+        whySuspicious: "Large data transfers to unapproved external endpoints outside working hours are a common indicator of data theft, especially from developer workstations with source code access.",
+        recommendedAction: "Isolate the endpoint from the network immediately. Capture a forensic disk image. Identify the external destination and determine what data was transferred. Escalate to incident response if source code or IP was involved."
+    },
+    {
+        id: "ALT-0905",
+        eventType: "Privilege Escalation Detected",
+        user: "r.singh",
+        ipAddress: "10.10.3.201",
+        time: "2026-03-20 04:05:18",
+        riskLevel: "High",
+        status: "Open",
+        asset: "SRV-APP-12 (Application Server)",
+        description: "User r.singh escalated privileges from a standard user account to local administrator on a production application server using a known UAC bypass technique.",
+        whySuspicious: "Privilege escalation through a UAC bypass is a well-documented attack technique. Standard users should never gain admin privileges on production servers without a change request.",
+        recommendedAction: "Revoke the escalated privileges immediately. Isolate the server from the network. Analyze the method used and check for persistence mechanisms. Patch the UAC vulnerability and escalate to Tier 2."
+    },
+    {
+        id: "ALT-0906",
+        eventType: "Suspicious PowerShell Execution",
+        user: "l.baker",
+        ipAddress: "10.10.7.55",
+        time: "2026-03-19 22:30:09",
+        riskLevel: "High",
+        status: "Open",
+        asset: "WKS-FIN-034 (Finance Workstation)",
+        description: "An encoded PowerShell command was executed on a Finance workstation. The command used base64 encoding and attempted to download a payload from an external URL.",
+        whySuspicious: "Base64-encoded PowerShell commands downloading external payloads are a classic indicator of fileless malware delivery. Finance workstations should not be running such commands.",
+        recommendedAction: "Isolate the endpoint immediately. Decode and analyze the PowerShell command. Check EDR logs for further execution activity. Scan the endpoint for malware and review proxy logs for the external URL."
+    },
+    {
+        id: "ALT-0907",
+        eventType: "Malware Execution Detected",
+        user: "k.nguyen",
+        ipAddress: "10.10.4.92",
+        time: "2026-03-20 05:12:44",
+        riskLevel: "High",
+        status: "Open",
+        asset: "WKS-MKT-019 (Marketing Workstation)",
+        description: "EDR agent flagged execution of a known trojan (Win32/AgentTesla) on k.nguyen's workstation. The malware was delivered via a phishing email attachment disguised as an invoice.",
+        whySuspicious: "AgentTesla is a credential-stealing trojan commonly used in targeted attacks. Its presence indicates a successful phishing compromise and potential credential theft.",
+        recommendedAction: "Quarantine the workstation from the network. Run a full malware scan and remove all artifacts. Reset the user's credentials across all systems. Trace the phishing email to identify other recipients."
+    },
+    {
+        id: "ALT-0908",
+        eventType: "Unauthorized Admin Access",
+        user: "svc-backup",
+        ipAddress: "10.10.1.15",
+        time: "2026-03-20 03:00:22",
+        riskLevel: "High",
+        status: "Investigating",
+        asset: "AD-DC02 (Backup Domain Controller)",
+        description: "The svc-backup service account was used for an interactive admin login on the backup domain controller. This account is restricted to automated backup tasks only.",
+        whySuspicious: "Service accounts should never be used for interactive logins. This behavior suggests the account credentials may have been compromised and are being used for unauthorized access.",
+        recommendedAction: "Disable the svc-backup account and rotate its credentials. Audit all recent activity under this account. Check for new scheduled tasks, group policy changes, or created accounts. Escalate if domain compromise is suspected."
+    },
+    {
+        id: "ALT-0909",
+        eventType: "Brute Force Attack Detected",
+        user: "admin",
+        ipAddress: "198.51.100.73",
+        time: "2026-03-20 06:22:10",
+        riskLevel: "High",
+        status: "Open",
+        asset: "Web Portal (portal.corp.internal)",
+        description: "Over 1,200 login attempts targeting the admin account on the corporate web portal from a single external IP address within 15 minutes.",
+        whySuspicious: "The massive volume of attempts from a single IP targeting the admin account is a textbook brute-force attack. If the password is weak, the account may already be compromised.",
+        recommendedAction: "Block the attacking IP at the WAF and firewall. Force a password reset on the admin account. Enable account lockout policies and rate limiting. Review portal access logs for any successful authentication from this IP."
+    },
+    {
+        id: "ALT-0910",
+        eventType: "DDoS Attack Detected",
+        user: "N/A (External)",
+        ipAddress: "Multiple Sources",
+        time: "2026-03-20 07:45:00",
+        riskLevel: "High",
+        status: "Open",
+        asset: "Edge Load Balancer (lb-edge-01)",
+        description: "A volumetric DDoS attack generating approximately 12 Gbps of traffic is targeting the edge load balancer. Traffic is originating from a geographically distributed botnet.",
+        whySuspicious: "The traffic volume far exceeds normal baselines and is causing service degradation. The distributed nature of the source IPs confirms this is a coordinated DDoS attack.",
+        recommendedAction: "Activate DDoS mitigation through the CDN/scrubbing provider. Enable geo-blocking for non-business regions. Monitor service availability and prepare to scale infrastructure. Notify management if customer-facing services are impacted."
+    },
+
+    // MEDIUM SEVERITY (10)
+    {
+        id: "ALT-0911",
+        eventType: "Login from New Location",
+        user: "s.williams",
+        ipAddress: "77.88.55.60",
+        time: "2026-03-20 08:15:33",
+        riskLevel: "Medium",
+        status: "Open",
+        asset: "Corporate Email (mail.corp.internal)",
+        description: "User s.williams logged into corporate email from a new geographic location not previously seen for this account. The user is typically based in New York.",
+        whySuspicious: "First-time logins from new locations can indicate compromised credentials. However, the user may be traveling, so this requires verification rather than immediate action.",
+        recommendedAction: "Send a verification prompt to the user through an out-of-band channel. Review the session for unusual email activity such as forwarding rules or bulk downloads. Monitor for additional anomalous behavior."
+    },
+    {
+        id: "ALT-0912",
+        eventType: "Unusual Access Time",
+        user: "p.garcia",
+        ipAddress: "10.10.6.33",
+        time: "2026-03-20 03:30:00",
+        riskLevel: "Medium",
+        status: "Open",
+        asset: "ERP System (erp-prod-01)",
+        description: "User p.garcia accessed the ERP production system at 3:30 AM local time. This user has no history of after-hours access and their role does not require it.",
+        whySuspicious: "Access during non-standard hours from an account with no prior off-hours activity may indicate compromised credentials being used when detection is less likely.",
+        recommendedAction: "Verify with the user whether the access was intentional. Review the specific ERP modules and records accessed during the session. Set up an alert for future off-hours access from this account."
+    },
+    {
+        id: "ALT-0913",
+        eventType: "Multiple Password Reset Requests",
+        user: "e.johnson",
+        ipAddress: "10.10.2.77",
+        time: "2026-03-20 09:02:11",
+        riskLevel: "Medium",
+        status: "Open",
+        asset: "Identity Management (idm-01)",
+        description: "User e.johnson submitted 8 password reset requests across different systems within 20 minutes from a single workstation.",
+        whySuspicious: "An unusual number of password resets in a short time may indicate an attacker who has gained access to one account and is attempting to reset credentials for lateral movement.",
+        recommendedAction: "Contact e.johnson to confirm they initiated the resets. Place a temporary hold on further password changes for this user. Review which systems were targeted and check for any successful logins after resets."
+    },
+    {
+        id: "ALT-0914",
+        eventType: "Access to Sensitive Directory",
+        user: "t.robinson",
+        ipAddress: "10.10.8.121",
+        time: "2026-03-19 18:45:22",
+        riskLevel: "Medium",
+        status: "Investigating",
+        asset: "FileServer-Legal (fs-legal-01)",
+        description: "User t.robinson from Sales accessed the Legal department's confidential contracts directory. While the user has read permissions, this is not within their normal access pattern.",
+        whySuspicious: "Cross-departmental access to sensitive legal documents deviates from this user's baseline behavior and could indicate unauthorized data collection or insider threat activity.",
+        recommendedAction: "Review the specific files accessed and determine if there is a legitimate business need. Consult with the Legal department. Consider restricting cross-departmental file permissions."
+    },
+    {
+        id: "ALT-0915",
+        eventType: "Unrecognized Device Login",
+        user: "c.davis",
+        ipAddress: "172.16.50.200",
+        time: "2026-03-20 10:18:55",
+        riskLevel: "Medium",
+        status: "Open",
+        asset: "SaaS CRM (crm.vendor.com)",
+        description: "User c.davis logged into the CRM platform from a device that does not match any previously registered endpoints. The device fingerprint is new.",
+        whySuspicious: "Logins from unrecognized devices may indicate credential theft and access from an attacker-controlled machine. However, the user may also have a new device.",
+        recommendedAction: "Prompt the user to verify the device through the company's device registration process. Temporarily restrict sensitive CRM operations from unregistered devices. Enable device-based conditional access policies."
+    },
+    {
+        id: "ALT-0916",
+        eventType: "High Number of API Requests",
+        user: "api-user-ext-03",
+        ipAddress: "104.26.10.78",
+        time: "2026-03-20 07:00:00",
+        riskLevel: "Medium",
+        status: "Open",
+        asset: "Public API Gateway (api-gw-01)",
+        description: "External API client api-user-ext-03 sent 45,000 requests in the last hour, which is 3x the normal rate for this integration partner.",
+        whySuspicious: "A sudden spike in API traffic from a known partner could indicate a misconfigured client, a compromised API key, or an intentional attempt to scrape data through the API.",
+        recommendedAction: "Throttle the API key to enforce rate limits. Contact the integration partner to verify whether the traffic spike is expected. Review API logs for unusual endpoints or data patterns being accessed."
+    },
+    {
+        id: "ALT-0917",
+        eventType: "Failed MFA Attempts",
+        user: "n.clark",
+        ipAddress: "10.10.9.45",
+        time: "2026-03-20 08:50:30",
+        riskLevel: "Medium",
+        status: "Open",
+        asset: "SSO Portal (sso.corp.internal)",
+        description: "User n.clark failed MFA verification 6 times in a row after successful password entry. The correct password suggests the attacker has credentials but not the MFA token.",
+        whySuspicious: "Successful password with repeated MFA failures is a strong signal that credentials have been compromised but the second factor is blocking access. An attacker may be attempting MFA fatigue or brute-forcing a TOTP code.",
+        recommendedAction: "Temporarily lock the account and force a full credential reset including MFA re-enrollment. Investigate how the password was compromised. Check for related phishing campaigns or credential dumps."
+    },
+    {
+        id: "ALT-0918",
+        eventType: "Unusual File Access Pattern",
+        user: "b.wilson",
+        ipAddress: "10.10.3.89",
+        time: "2026-03-19 21:10:00",
+        riskLevel: "Medium",
+        status: "Open",
+        asset: "SharePoint (sp-corp-01)",
+        description: "User b.wilson downloaded 340 files from a SharePoint document library within 30 minutes. The user normally accesses 5-10 documents per day.",
+        whySuspicious: "Mass file downloads deviating significantly from baseline behavior can indicate data hoarding before a resignation, insider threat activity, or a compromised account being used for exfiltration.",
+        recommendedAction: "Check whether b.wilson has submitted a resignation or transfer request. Review the downloaded files for sensitivity classification. Apply DLP policies to prevent further bulk downloads and escalate if sensitive data is involved."
+    },
+    {
+        id: "ALT-0919",
+        eventType: "Suspicious Network Connection",
+        user: "f.lee",
+        ipAddress: "10.10.5.67",
+        time: "2026-03-20 04:20:15",
+        riskLevel: "Medium",
+        status: "Investigating",
+        asset: "WKS-RND-042 (R&D Workstation)",
+        description: "A persistent outbound connection to a known command-and-control (C2) IP address was detected from f.lee's R&D workstation. The connection uses an uncommon port (8443).",
+        whySuspicious: "Communication with a known C2 IP over a non-standard port is a strong indicator of malware beaconing. The R&D workstation likely contains sensitive intellectual property.",
+        recommendedAction: "Isolate the workstation from the network immediately. Block the C2 IP at all network boundaries. Conduct a full endpoint forensic analysis. Check for lateral movement from this host to other R&D systems."
+    },
+    {
+        id: "ALT-0920",
+        eventType: "Distributed Traffic Spike",
+        user: "N/A (External)",
+        ipAddress: "Multiple Sources",
+        time: "2026-03-20 06:55:00",
+        riskLevel: "Medium",
+        status: "Open",
+        asset: "CDN Edge (cdn-node-us-east)",
+        description: "An abnormal 300% traffic increase was detected at the US-East CDN edge node. The traffic pattern does not match expected seasonal or campaign-related spikes.",
+        whySuspicious: "Unexplained traffic spikes may indicate the early stages of a DDoS attack, a botnet probing for vulnerabilities, or a scraping operation targeting cached content.",
+        recommendedAction: "Monitor the traffic pattern closely for further escalation. Enable additional CDN rate limiting. Compare traffic source IPs against threat intelligence. Prepare DDoS mitigation playbook for activation if the spike continues."
+    },
+
+    // LOW SEVERITY (5)
+    {
+        id: "ALT-0921",
+        eventType: "Successful Login",
+        user: "j.martinez",
+        ipAddress: "10.10.2.50",
+        time: "2026-03-20 08:01:05",
+        riskLevel: "Low",
+        status: "Resolved",
+        asset: "Corporate Workstation (WKS-ENG-011)",
+        description: "Standard successful login for j.martinez from their assigned workstation during normal business hours. All authentication factors verified.",
+        whySuspicious: "This event alone is not suspicious. It is logged as a baseline audit event. However, this user previously had a high-severity alert (ALT-0901) for failed logins, so this success is worth correlating.",
+        recommendedAction: "No immediate action required. Correlate with ALT-0901 to confirm whether the account was legitimately recovered or if an attacker gained access after brute-force attempts."
+    },
+    {
+        id: "ALT-0922",
+        eventType: "File Access",
+        user: "a.chen",
+        ipAddress: "10.10.6.18",
+        time: "2026-03-20 09:30:00",
+        riskLevel: "Low",
+        status: "Resolved",
+        asset: "SharePoint (sp-eng-docs)",
+        description: "User a.chen accessed standard engineering documentation on the team SharePoint site. Access is within normal scope and permissions.",
+        whySuspicious: "This event is not inherently suspicious. It serves as an audit trail entry. The user has legitimate access and the documents are not classified above their clearance.",
+        recommendedAction: "No action required. This event is logged for audit compliance. Retain for correlation purposes if future anomalies involve this user."
+    },
+    {
+        id: "ALT-0923",
+        eventType: "Internal System Activity",
+        user: "svc-monitor",
+        ipAddress: "10.10.1.5",
+        time: "2026-03-20 06:00:00",
+        riskLevel: "Low",
+        status: "Resolved",
+        asset: "Monitoring Server (mon-srv-01)",
+        description: "Automated health check completed by the svc-monitor service account. All monitored systems responded within normal thresholds.",
+        whySuspicious: "Automated system checks are expected behavior. This event is logged for completeness. Any deviation from the schedule or unexpected targets would elevate the severity.",
+        recommendedAction: "No action required. Continue monitoring. Verify that the check interval and target list have not been modified."
+    },
+    {
+        id: "ALT-0924",
+        eventType: "Scheduled Task Execution",
+        user: "svc-deploy",
+        ipAddress: "10.10.1.20",
+        time: "2026-03-20 02:00:00",
+        riskLevel: "Low",
+        status: "Resolved",
+        asset: "CI/CD Pipeline (jenkins-prod-01)",
+        description: "Nightly deployment pipeline executed successfully. Build 4821 was deployed to the staging environment. All tests passed.",
+        whySuspicious: "Scheduled task ran as expected. This event is logged as an operational baseline. Deviations such as unexpected deployment times, failed builds, or unauthorized pipeline modifications would be flagged separately.",
+        recommendedAction: "No action required. Verify that the deployed build matches the approved change request. Archive the build log for compliance."
+    },
+    {
+        id: "ALT-0925",
+        eventType: "User Logout",
+        user: "s.williams",
+        ipAddress: "10.10.2.50",
+        time: "2026-03-20 17:05:22",
+        riskLevel: "Low",
+        status: "Resolved",
+        asset: "Corporate Workstation (WKS-SALES-005)",
+        description: "Standard end-of-day logout for s.williams. The session duration and activity pattern were within normal parameters.",
+        whySuspicious: "This event is not suspicious. It is a routine audit log entry. The user logged out at their typical end-of-day time from their assigned workstation.",
+        recommendedAction: "No action required. Retain for session tracking and correlation with any future anomalies involving this user account."
+    }
+];
+
+var curFilter="all",curSearch="",sortCol="id",sortAsc=true,selIdx=-1,filtered=[],showCount=8,viewMode="cards",collapsed={};
+
+document.addEventListener("DOMContentLoaded",function(){
+tick();setInterval(tick,1000);render();drawCharts();drawSparks();bindAll();
+});
+
+function tick(){var d=new Date();document.getElementById("clock").textContent=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")+":"+String(d.getSeconds()).padStart(2,"0");}
+
+function getFiltered(){
+return alerts.filter(function(a){
+var fm=curFilter==="all"||a.riskLevel===curFilter;
+var sm=curSearch===""||a.eventType.toLowerCase().indexOf(curSearch)!==-1||a.user.toLowerCase().indexOf(curSearch)!==-1||a.ipAddress.toLowerCase().indexOf(curSearch)!==-1||a.id.toLowerCase().indexOf(curSearch)!==-1||a.asset.toLowerCase().indexOf(curSearch)!==-1||a.description.toLowerCase().indexOf(curSearch)!==-1;
+return fm&&sm;
+});
+}
+
+function render(){
+filtered=getFiltered();
+filtered.sort(function(a,b){var va=a[sortCol]||"",vb=b[sortCol]||"";
+if(sortCol==="riskLevel"){var o={High:0,Medium:1,Low:2};va=o[va];vb=o[vb];}
+return sortAsc?(va>vb?1:va<vb?-1:0):(va<vb?1:va>vb?-1:0);});
+
+var h=filtered.filter(function(a){return a.riskLevel==="High"}).length;
+var m=filtered.filter(function(a){return a.riskLevel==="Medium"}).length;
+var l=filtered.filter(function(a){return a.riskLevel==="Low"}).length;
+var t=filtered.length;
+animC("cT",t);animC("cH",h);animC("cM",m);animC("cL",l);
+document.getElementById("tbAll").textContent=alerts.length;
+document.getElementById("tbHi").textContent=alerts.filter(function(a){return a.riskLevel==="High"}).length;
+document.getElementById("tbMe").textContent=alerts.filter(function(a){return a.riskLevel==="Medium"}).length;
+document.getElementById("tbLo").textContent=alerts.filter(function(a){return a.riskLevel==="Low"}).length;
+var total=t||1;
+document.getElementById("barH").style.width=(h/total*100)+"%";
+document.getElementById("barM").style.width=(m/total*100)+"%";
+document.getElementById("barL").style.width=(l/total*100)+"%";
+renderCards();renderTable();
+}
+
+function renderCards(){
+var el=document.getElementById("cardsView");
+if(filtered.length===0){el.innerHTML='<div class="empty-msg">No alerts match your criteria</div>';return;}
+var html="";var groups=[{key:"High",cls:"h",label:"HIGH SEVERITY"},{key:"Medium",cls:"m",label:"MEDIUM SEVERITY"},{key:"Low",cls:"l",label:"LOW SEVERITY"}];
+groups.forEach(function(g){
+var items=filtered.filter(function(a){return a.riskLevel===g.key});
+if(items.length===0)return;
+var isCollapsed=collapsed[g.key];
+html+='<div class="group-header '+g.cls+'"><span class="gh-dot '+g.cls+'"></span><span class="gh-label">'+g.label+'</span><span class="gh-count">'+items.length+'</span><button class="gh-collapse" data-group="'+g.key+'">'+(isCollapsed?'Show':'Hide')+'</button></div>';
+if(!isCollapsed){
+var shown=items.slice(0,showCount);
+shown.forEach(function(a,i){
+var idx=filtered.indexOf(a);
+var stCls=a.status.toLowerCase().replace(" ","");
+html+='<div class="a-card '+a.riskLevel.toLowerCase()+(idx===selIdx?' sel':'')+'" data-idx="'+idx+'">'+
+'<div class="a-sev">'+a.riskLevel.charAt(0)+'</div>'+
+'<div class="a-body">'+
+'<div class="a-top"><span class="a-id">'+a.id+'</span><span class="a-status '+stCls+'"><span class="sd"></span>'+a.status+'</span></div>'+
+'<div class="a-event">'+a.eventType+'</div>'+
+'<div class="a-desc">'+a.description+'</div>'+
+'<div class="a-meta">'+
+'<span class="a-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+a.user+'</span>'+
+'<span class="a-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>'+a.ipAddress+'</span>'+
+'<span class="a-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'+fmtTime(a.time)+'</span>'+
+'</div></div></div>';
+});
+if(items.length>showCount){
+html+='<div class="show-more"><button class="btn-more" data-group="'+g.key+'">Show '+(items.length-showCount)+' more '+g.key.toLowerCase()+' alerts</button></div>';
+}
+}
+});
+el.innerHTML=html;
+el.querySelectorAll(".a-card").forEach(function(card){
+card.addEventListener("click",function(){var idx=parseInt(card.getAttribute("data-idx"));selIdx=idx;render();openPanel(filtered[idx]);});
+});
+el.querySelectorAll(".gh-collapse").forEach(function(btn){
+btn.addEventListener("click",function(){var g=btn.getAttribute("data-group");collapsed[g]=!collapsed[g];render();});
+});
+el.querySelectorAll(".btn-more").forEach(function(btn){
+btn.addEventListener("click",function(e){e.stopPropagation();showCount=999;render();});
+});
+}
+
+function renderTable(){
+var tbody=document.getElementById("tbody");
+var empty=document.getElementById("emptyMsg");
+tbody.innerHTML="";
+if(filtered.length===0){empty.style.display="block";return;}else{empty.style.display="none";}
+filtered.forEach(function(a,i){
+var tr=document.createElement("tr");
+if(i===selIdx)tr.className="sel";
+tr.setAttribute("data-idx",i);
+var stCls=a.status.toLowerCase().replace(" ","");
+tr.innerHTML='<td><span class="t-id">'+a.id+'</span></td><td><span class="t-evt">'+a.eventType+'</span></td><td>'+a.user+'</td><td><span class="t-mono">'+a.ipAddress+'</span></td><td><span class="t-mono">'+fmtTime(a.time)+'</span></td><td><span class="sev-pill '+a.riskLevel.toLowerCase()+'"><span class="sd"></span>'+a.riskLevel+'</span></td><td><span class="st-t '+stCls+'"><span class="sd"></span>'+a.status+'</span></td>';
+tr.addEventListener("click",function(){selIdx=i;render();openPanel(filtered[i]);});
+tbody.appendChild(tr);
+});
+}
+
+function fmtTime(s){var p=s.split(" ");return p[0].substring(5)+" "+p[1].substring(0,5);}
+
+function animC(id,target){var el=document.getElementById(id);var cur=parseInt(el.textContent)||0;if(cur===target){el.textContent=target;return;}
+var steps=12,inc=(target-cur)/steps,step=0;
+var tm=setInterval(function(){step++;if(step>=steps){el.textContent=target;clearInterval(tm);}else{el.textContent=Math.round(cur+inc*step);}},22);}
+
+// CHARTS
+function drawCharts(){drawDonut();drawTimeline();}
+function drawDonut(){
+var c=document.getElementById("donut"),ctx=c.getContext("2d");
+var dpr=window.devicePixelRatio||1;c.width=140*dpr;c.height=140*dpr;ctx.scale(dpr,dpr);c.style.width="140px";c.style.height="140px";
+var hi=alerts.filter(function(a){return a.riskLevel==="High"}).length;
+var me=alerts.filter(function(a){return a.riskLevel==="Medium"}).length;
+var lo=alerts.filter(function(a){return a.riskLevel==="Low"}).length;
+var data=[{v:hi,c:"#f87171",l:"High"},{v:me,c:"#fbbf24",l:"Medium"},{v:lo,c:"#34d399",l:"Low"}];
+var total=hi+me+lo||1,cx=70,cy=70,r=56,lw=16,start=-Math.PI/2;
+ctx.clearRect(0,0,140,140);
+data.forEach(function(d){if(d.v===0)return;var angle=(d.v/total)*2*Math.PI;ctx.beginPath();ctx.arc(cx,cy,r,start,start+angle);ctx.strokeStyle=d.c;ctx.lineWidth=lw;ctx.lineCap="butt";ctx.stroke();start+=angle;});
+ctx.fillStyle="#f0f2f7";ctx.font="700 22px Fira Code,monospace";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(total,cx,cy-4);
+ctx.fillStyle="#6b7490";ctx.font="500 9px Plus Jakarta Sans,sans-serif";ctx.fillText("alerts",cx,cy+12);
+var leg="";data.forEach(function(d){leg+='<div class="dl-r"><span class="dl-d" style="background:'+d.c+'"></span>'+d.l+'<span class="dl-v">'+d.v+'</span></div>';});
+document.getElementById("dLeg").innerHTML=leg;
+}
+
+function drawTimeline(){
+var c=document.getElementById("timeline"),ctx=c.getContext("2d");
+var dpr=window.devicePixelRatio||1;var rect=c.parentElement.getBoundingClientRect();
+var w=rect.width-36||300,h=rect.height-40||100;
+c.width=w*dpr;c.height=h*dpr;ctx.scale(dpr,dpr);c.style.width=w+"px";c.style.height=h+"px";
+var hours=["22:00","23:00","00:00","01:00","02:00","03:00","04:00","05:00","06:00","07:00","08:00","09:00"];
+var hi= [0,1,0,2,3,2,3,1,2,1,0,0];
+var me= [1,0,1,1,0,1,0,1,1,2,2,1];
+var lo= [0,0,0,0,0,0,1,0,1,1,1,1];
+var maxV=5;var barW=w/hours.length*.6;var gap=w/hours.length;
+hours.forEach(function(hr,i){
+var x=i*gap+gap*.2;var base=h-18;
+var hH=(hi[i]/maxV)*(h-30);var mH=(me[i]/maxV)*(h-30);var lH=(lo[i]/maxV)*(h-30);
+ctx.fillStyle="#f87171";ctx.beginPath();ctx.fillRect(x,base-hH-mH-lH,barW,hH,2);ctx.fill();
+ctx.fillStyle="#fbbf24";ctx.beginPath();ctx.fillRect(x,base-mH-lH,barW,mH,2);ctx.fill();
+ctx.fillStyle="#34d399";ctx.beginPath();ctx.fillRect(x,base-lH,barW,lH,2);ctx.fill();
+ctx.fillStyle="#4a5268";ctx.font="500 8px Plus Jakarta Sans,sans-serif";ctx.textAlign="center";ctx.fillText(hr,x+barW/2,h-4);
+});
+}
+
+// SPARKLINES
+function drawSparks(){
+drawSpark("spT",[22,24,23,25,24,23,25],"#7c85f5");drawSpark("spH",[8,11,9,12,10,9,10],"#f87171");
+drawSpark("spM",[9,8,10,9,10,11,10],"#fbbf24");drawSpark("spL",[5,5,4,4,4,5,5],"#34d399");
+}
+function drawSpark(id,vals,color){
+var c=document.getElementById(id);if(!c)return;var dpr=window.devicePixelRatio||1;var w=c.parentElement.offsetWidth||90,h=24;
+c.width=w*dpr;c.height=h*dpr;c.style.width=w+"px";c.style.height=h+"px";
+var ctx=c.getContext("2d");ctx.scale(dpr,dpr);
+var max=Math.max.apply(null,vals)*1.2,min=Math.min.apply(null,vals)*.8;if(max===min)max=min+1;var sx=w/(vals.length-1);
+ctx.beginPath();for(var i=0;i<vals.length;i++){var x=i*sx,y=h-((vals[i]-min)/(max-min))*h*.7-h*.1;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.stroke();
+ctx.lineTo((vals.length-1)*sx,h);ctx.lineTo(0,h);ctx.closePath();
+var g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,color+"22");g.addColorStop(1,color+"04");ctx.fillStyle=g;ctx.fill();
+}
+setTimeout(function(){drawSparks();drawCharts();},100);
+window.addEventListener("resize",function(){drawSparks();drawCharts();});
+
+// EVENTS
+function bindAll(){
+document.getElementById("sIn").addEventListener("input",function(e){curSearch=e.target.value.toLowerCase().trim();selIdx=-1;showCount=8;render();});
+document.querySelectorAll(".tab").forEach(function(tab){tab.addEventListener("click",function(){
+document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("on");});tab.classList.add("on");curFilter=tab.getAttribute("data-f");selIdx=-1;showCount=8;render();});});
+document.querySelectorAll("th[data-col]").forEach(function(th){th.addEventListener("click",function(){
+var col=th.getAttribute("data-col");document.querySelectorAll("th").forEach(function(t){t.classList.remove("sorted");});
+if(sortCol===col){sortAsc=!sortAsc;}else{sortCol=col;sortAsc=true;}th.classList.add("sorted");
+th.querySelector(".sa").innerHTML=sortAsc?"&#9650;":"&#9660;";render();});});
+document.getElementById("vtCards").addEventListener("click",function(){viewMode="cards";this.classList.add("on");document.getElementById("vtTable").classList.remove("on");
+document.getElementById("cardsView").classList.add("on");document.getElementById("tblView").classList.remove("on");document.getElementById("tblView").style.display="none";document.getElementById("cardsView").style.display="";});
+document.getElementById("vtTable").addEventListener("click",function(){viewMode="table";this.classList.add("on");document.getElementById("vtCards").classList.remove("on");
+document.getElementById("tblView").classList.add("on");document.getElementById("tblView").style.display="block";document.getElementById("cardsView").classList.remove("on");document.getElementById("cardsView").style.display="none";});
+document.getElementById("spClose").addEventListener("click",closePanel);
+document.getElementById("btnDis").addEventListener("click",function(){closePanel();showToast("Alert dismissed successfully");});
+document.getElementById("btnEsc").addEventListener("click",function(){closePanel();showToast("Alert escalated to Tier 2");});
+document.addEventListener("keydown",function(e){
+if(e.key==="Escape"){closePanel();return;}
+if(document.getElementById("sPanel").classList.contains("open"))return;
+if(document.activeElement&&document.activeElement.tagName==="INPUT")return;
+if(e.key==="j"||e.key==="J"){e.preventDefault();selIdx=Math.min(selIdx+1,filtered.length-1);render();scrollToSel();}
+if(e.key==="k"||e.key==="K"){e.preventDefault();selIdx=Math.max(selIdx-1,0);render();scrollToSel();}
+if(e.key==="Enter"&&selIdx>=0&&selIdx<filtered.length){openPanel(filtered[selIdx]);}
+});
+}
+function scrollToSel(){var row=document.querySelector(".a-card.sel,.tbl tbody tr.sel");if(row)row.scrollIntoView({block:"nearest"});}
+
+// SIDE PANEL
+function openPanel(a){
+document.getElementById("spSev").textContent=a.riskLevel;document.getElementById("spSev").className="sp-sev "+a.riskLevel.toLowerCase();
+document.getElementById("spTitle").textContent=a.eventType;
+document.getElementById("spId").textContent=a.id;document.getElementById("spEvt").textContent=a.eventType;
+document.getElementById("spUsr").textContent=a.user;document.getElementById("spIp").textContent=a.ipAddress;
+document.getElementById("spTime").textContent=a.time;document.getElementById("spAsset").textContent=a.asset;
+document.getElementById("spDesc").textContent=a.description;document.getElementById("spWhy").textContent=a.whySuspicious;
+document.getElementById("spAct").textContent=a.recommendedAction;
+document.getElementById("sPanel").classList.add("open");document.getElementById("content").classList.add("shifted");
+}
+function closePanel(){document.getElementById("sPanel").classList.remove("open");document.getElementById("content").classList.remove("shifted");}
+function showToast(msg){var t=document.getElementById("toast");document.getElementById("tMsg").textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},3000);}
+</script></body></html>

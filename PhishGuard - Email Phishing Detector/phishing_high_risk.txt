@@ -1,0 +1,14 @@
+From: it-support@micr0soft-security-alerts.com
+To: user@company.com
+Subject: Urgent - Action required
+
+Hi,
+
+We detected unusual sign-in activity to your mailbox.
+Action required immediately to keep your account active.
+
+Verify now: http://185.23.45.67/login
+
+If this was not you, change your password after verifying.
+
+IT Support

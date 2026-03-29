@@ -1,0 +1,14 @@
+From: noreply@github.com
+To: developer@company.com
+Subject: Your pull request was merged
+
+Hi,
+
+Your pull request #412 was successfully merged into the main branch.
+
+Pull Request: https://github.com/company/project/pull/412
+Repository: https://github.com/company/project
+
+Thanks for contributing.
+
+GitHub

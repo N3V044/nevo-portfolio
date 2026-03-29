@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Injection Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#060a0f;--panel:#0c1420;--border:#1a3050;--accent:#00d4ff;--danger:#ff4060;--safe:#00ff9f;--warn:#ffcc00;--text:#c8d8e8;--muted:#4a6070;--mono:'Share Tech Mono',monospace;--ui:'Rajdhani',sans-serif}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--ui);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,.012) 2px,rgba(0,212,255,.012) 4px);pointer-events:none;z-index:9999}
+.page{max-width:1060px;margin:0 auto;padding:36px 20px 70px}
+header{text-align:center;margin-bottom:40px}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px}
+.logo-icon{font-size:2rem;filter:drop-shadow(0 0 10px var(--danger))}
+h1{font-family:var(--ui);font-weight:700;font-size:2.1rem;letter-spacing:6px;text-transform:uppercase;color:var(--danger);text-shadow:0 0 22px rgba(255,64,96,.4)}
+.tagline{font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:3px}
+.hbar{width:100%;height:1px;margin-top:20px;background:linear-gradient(90deg,transparent,var(--danger),transparent);opacity:.4}
+.info{background:rgba(255,204,0,.06);border:1px solid rgba(255,204,0,.25);border-radius:4px;padding:14px 18px;margin-bottom:20px;font-family:var(--mono);font-size:.75rem;line-height:1.7;color:var(--warn)}
+.info strong{font-weight:700}.info code{background:rgba(255,204,0,.12);padding:1px 6px;border-radius:3px}
+
+.sync-row{text-align:center;margin-bottom:18px}
+.btn-sync{display:inline-flex;align-items:center;gap:8px;background:transparent;border:1px solid var(--accent);color:var(--accent);font-family:var(--ui);font-weight:700;font-size:.82rem;letter-spacing:3px;text-transform:uppercase;padding:10px 24px;border-radius:4px;cursor:pointer;transition:all .2s}
+.btn-sync:hover{background:rgba(0,212,255,.08);box-shadow:0 0 14px rgba(0,212,255,.12)}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:680px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.card.vuln{border-color:rgba(255,64,96,.35)}.card.safe{border-color:rgba(0,255,159,.25)}
+.ch{padding:13px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.card.vuln .ch{background:rgba(255,64,96,.08);border-bottom-color:rgba(255,64,96,.2)}
+.card.safe .ch{background:rgba(0,255,159,.06);border-bottom-color:rgba(0,255,159,.15)}
+.ch h2{font-size:.95rem;font-weight:700;letter-spacing:2px;flex:1}
+.card.vuln .ch h2{color:var(--danger)}.card.safe .ch h2{color:var(--safe)}
+.ch-tag{font-family:var(--mono);font-size:.58rem;padding:2px 8px;border-radius:2px;letter-spacing:1px}
+.card.vuln .ch-tag{color:var(--danger);border:1px solid rgba(255,64,96,.35);background:rgba(255,64,96,.08)}
+.card.safe .ch-tag{color:var(--safe);border:1px solid rgba(0,255,159,.3);background:rgba(0,255,159,.07)}
+.cb{padding:18px}
+.fl{font-family:var(--mono);font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block}
+input[type="text"],input[type="password"]{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:3px;padding:9px 12px;font-family:var(--mono);font-size:.8rem;color:var(--text);outline:none;transition:border-color .18s;margin-bottom:12px}
+input:focus{border-color:var(--accent)}
+.qf-l{font-family:var(--mono);font-size:.6rem;letter-spacing:2px;color:var(--muted);margin-bottom:6px}
+.qf{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.qb{font-family:var(--mono);font-size:.62rem;padding:4px 10px;border-radius:3px;cursor:pointer;border:1px solid;background:transparent;transition:all .15s;letter-spacing:.5px;line-height:1.4}
+.qb.ok{color:var(--safe);border-color:rgba(0,255,159,.3)}.qb.ok:hover{background:rgba(0,255,159,.08)}
+.qb.bad{color:var(--muted);border-color:var(--border)}.qb.bad:hover{background:rgba(255,255,255,.03)}
+.qb.inj{color:var(--danger);border-color:rgba(255,64,96,.35)}.qb.inj:hover{background:rgba(255,64,96,.08)}
+.btn-go{width:100%;padding:11px;border-radius:3px;cursor:pointer;font-family:var(--ui);font-weight:700;font-size:.88rem;letter-spacing:3px;text-transform:uppercase;border:1px solid;background:transparent;transition:all .2s}
+.card.vuln .btn-go{border-color:var(--danger);color:var(--danger)}.card.vuln .btn-go:hover{background:rgba(255,64,96,.1)}
+.card.safe .btn-go{border-color:var(--safe);color:var(--safe)}.card.safe .btn-go:hover{background:rgba(0,255,159,.08)}
+.res{margin-top:14px;border-radius:3px;border:1px solid var(--border);overflow:hidden;display:none}
+.res.show{display:block;animation:fu .25s ease}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.res-h{padding:10px 14px;display:flex;align-items:center;gap:8px;font-family:var(--ui);font-weight:700;font-size:.88rem;letter-spacing:2px}
+.res-h.ok{background:rgba(0,255,159,.1);border-bottom:1px solid rgba(0,255,159,.2);color:var(--safe)}
+.res-h.no{background:rgba(255,64,96,.1);border-bottom:1px solid rgba(255,64,96,.2);color:var(--danger)}
+.res.ok-b{border-color:rgba(0,255,159,.25)}.res.no-b{border-color:rgba(255,64,96,.3)}
+.res-b{padding:12px 14px;background:rgba(0,0,0,.25);font-family:var(--mono);font-size:.72rem;line-height:1.75}
+.rk{color:var(--muted)}.rv{color:var(--text)}.rv.good{color:var(--safe);font-weight:700}.rv.bad2{color:var(--danger);font-weight:700}
+.ql{font-family:var(--mono);font-size:.58rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:10px 0 5px}
+.qbox{background:#02060c;border:1px solid var(--border);border-radius:3px;padding:10px 12px;font-family:var(--mono);font-size:.71rem;line-height:1.65;white-space:pre-wrap;word-break:break-all;color:#c8d8e8;min-height:38px}
+.kw{color:#c084fc}.sv{color:#a3e635}.ij{color:var(--danger);text-decoration:underline wavy var(--danger);text-underline-offset:3px}
+.cmt{color:#3a5268}
+
+/* Diff */
+.diff{margin-top:20px;background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:18px;display:none}
+.diff.show{display:block;animation:fu .3s ease}
+.diff-t{font-family:var(--mono);font-size:.65rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.diff-g{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:680px){.diff-g{grid-template-columns:1fr}}
+.diff-c{border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.diff-c.dv{border-color:rgba(255,64,96,.3)}.diff-c.ds{border-color:rgba(0,255,159,.2)}
+.diff-ch{padding:8px 12px;font-family:var(--mono);font-size:.62rem;letter-spacing:1px}
+.diff-c.dv .diff-ch{background:rgba(255,64,96,.06);color:var(--danger)}
+.diff-c.ds .diff-ch{background:rgba(0,255,159,.04);color:var(--safe)}
+.diff-cb{padding:10px 12px;font-family:var(--mono);font-size:.68rem;line-height:1.7;background:#02060c;color:var(--text)}
+
+/* Dashboard overlay */
+.dash-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto}
+.dash-overlay.show{display:block;animation:fu .3s ease}
+.dash{max-width:800px;margin:0 auto;padding:36px 20px}
+.dash-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.dash-top h2{font-family:var(--ui);font-weight:700;font-size:1.4rem;letter-spacing:4px;text-transform:uppercase;color:var(--accent)}
+.dash-notif{font-family:var(--mono);font-size:.6rem;background:var(--danger);color:#fff;padding:2px 7px;border-radius:10px;margin-left:10px}
+.btn-back{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:.72rem;padding:7px 16px;border-radius:3px;cursor:pointer;letter-spacing:1px;transition:all .2s;text-decoration:none}
+.btn-back:hover{border-color:var(--danger);color:var(--danger)}
+.dash-welcome{font-family:var(--mono);font-size:.9rem;margin-bottom:6px}.dash-welcome strong{color:var(--accent)}
+.dash-role{display:inline-block;font-family:var(--mono);font-size:.6rem;padding:2px 10px;border-radius:2px;color:var(--accent);border:1px solid rgba(0,212,255,.3);background:rgba(0,212,255,.08);margin-bottom:6px}
+.dash-session{font-family:var(--mono);font-size:.62rem;color:var(--muted);margin-bottom:24px}
+.dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:500px){.dash-stats{grid-template-columns:1fr}}
+.ds-card{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:16px;text-align:center}
+.ds-num{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--accent)}
+.ds-lbl{font-family:var(--mono);font-size:.6rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+.dash-act{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:18px}
+.act-t{font-family:var(--mono);font-size:.62rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.act-i{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(26,48,80,.4);font-family:var(--mono);font-size:.72rem}
+.act-i:last-child{border-bottom:none}
+.act-d{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.act-d.g{background:var(--safe)}.act-d.b{background:var(--accent)}.act-d.a{background:var(--warn)}
+.act-tm{color:var(--muted);flex:0 0 65px}
+.dash-warn{margin-top:24px;padding:14px 18px;border:1px solid rgba(255,204,0,.3);border-radius:4px;background:rgba(255,204,0,.05);font-family:var(--mono);font-size:.72rem;color:var(--warn);line-height:1.6}
+
+/* Explain */
+.explain{margin-top:28px;background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:22px 24px}
+.explain h3{font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;color:var(--text)}
+.ex-g{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:680px){.ex-g{grid-template-columns:1fr}}
+.ex-b h4{font-family:var(--mono);font-size:.72rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.ex-b.v h4{color:var(--danger)}.ex-b.s h4{color:var(--safe)}
+.ex-b p{font-size:.85rem;color:var(--muted);line-height:1.7;margin-bottom:12px}
+.code{background:#02060c;border:1px solid var(--border);border-radius:3px;padding:12px 14px;font-family:var(--mono);font-size:.7rem;line-height:1.7;overflow-x:auto;white-space:pre;color:#c8d8e8}
+footer{margin-top:40px;text-align:center;font-family:var(--mono);font-size:.62rem;color:var(--muted);letter-spacing:2px}
+</style>
+</head>
+<body>
+
+<!-- DASHBOARD OVERLAY -->
+<div class="dash-overlay" id="dashOv">
+<div class="dash">
+<div class="dash-top"><div style="display:flex;align-items:center"><h2>Internal Dashboard</h2><span class="dash-notif">3 new</span></div><button class="btn-back" onclick="closeDash()">Back to Demo</button></div>
+<div class="dash-welcome">Welcome, <strong id="dUser"></strong></div>
+<div class="dash-role" id="dRole"></div>
+<div class="dash-session" id="dSess"></div>
+<div class="dash-stats"><div class="ds-card"><div class="ds-num">12</div><div class="ds-lbl">Open Tickets</div></div><div class="ds-card"><div class="ds-num">3</div><div class="ds-lbl">Pending Reviews</div></div><div class="ds-card"><div class="ds-num">98%</div><div class="ds-lbl">System Health</div></div></div>
+<div class="dash-act"><div class="act-t">-- Recent Activity --</div>
+<div class="act-i"><span class="act-d g"></span><span class="act-tm">Just now</span><span>Logged in successfully</span></div>
+<div class="act-i"><span class="act-d a"></span><span class="act-tm">12m ago</span><span>Alert: Brute force on admin</span></div>
+<div class="act-i"><span class="act-d b"></span><span class="act-tm">1h ago</span><span>Investigation #47 updated</span></div>
+<div class="act-i"><span class="act-d b"></span><span class="act-tm">2h ago</span><span>Security scan - 3 findings</span></div>
+</div>
+<div class="dash-warn">This is a simulated dashboard. In the real app, this page loads after a successful SQL query returns a valid user. The vulnerable login bypassed authentication - you are viewing data you should not have access to.</div>
+</div>
+</div>
+
+<!-- MAIN PAGE -->
+<div class="page" id="mainPage">
+<header><div class="logo-row"><span class="logo-icon">&#9889;</span><h1>SQL Injection Demo</h1></div>
+<div class="tagline">Assignment 3 - Attack & Fix</div><div class="hbar"></div></header>
+
+<div class="info"><strong>How to test:</strong> Use the <strong>inject</strong> button on the left to bypass login. Then try the same on the right - it gets blocked. Payload: <code>' OR '1'='1' --</code></div>
+
+<div class="sync-row"><button class="btn-sync" onclick="syncAttack()">&#9889; Run Both Sides Simultaneously</button></div>
+
+<div class="grid">
+<div class="card vuln">
+<div class="ch"><span>&#9888;&#65039;</span><h2>Vulnerable Login</h2><span class="ch-tag">STRING FORMATTING</span></div>
+<div class="cb">
+<label class="fl">Username</label><input type="text" id="vu" placeholder="Enter username" autocomplete="off">
+<label class="fl">Password</label><input type="password" id="vp" placeholder="Enter password" autocomplete="off">
+<div class="qf-l">-- Quick fill --</div>
+<div class="qf">
+<button class="qb ok" onclick="fill('v','maya_ben_ari','MayaBen98!')">maya_ben_ari</button>
+<button class="qb ok" onclick="fill('v','omer4','Omer_HOME1111')">omer4</button>
+<button class="qb bad" onclick="fill('v','daniel.peretz','wrongpass')">wrong pass</button>
+<button class="qb inj" onclick="fill('v',String.fromCharCode(39)+' OR '+String.fromCharCode(39)+'1'+String.fromCharCode(39)+'='+String.fromCharCode(39)+'1'+String.fromCharCode(39)+' --','anything')">inject</button>
+</div>
+<button class="btn-go" onclick="doLogin('v')">Attempt Login</button>
+<div class="res" id="vr"></div>
+</div></div>
+
+<div class="card safe">
+<div class="ch"><span>&#128737;&#65039;</span><h2>Secure Login</h2><span class="ch-tag">PARAMETERIZED QUERY</span></div>
+<div class="cb">
+<label class="fl">Username</label><input type="text" id="su" placeholder="Enter username" autocomplete="off">
+<label class="fl">Password</label><input type="password" id="sp" placeholder="Enter password" autocomplete="off">
+<div class="qf-l">-- Quick fill --</div>
+<div class="qf">
+<button class="qb ok" onclick="fill('s','admin','Secret123')">admin</button>
+<button class="qb ok" onclick="fill('s','nina.sh','NinaOffice012026')">nina.sh</button>
+<button class="qb bad" onclick="fill('s','nina.sh','wrongpass')">wrong pass</button>
+<button class="qb inj" onclick="fill('s',String.fromCharCode(39)+' OR '+String.fromCharCode(39)+'1'+String.fromCharCode(39)+'='+String.fromCharCode(39)+'1'+String.fromCharCode(39)+' --','anything')">inject</button>
+</div>
+<button class="btn-go" onclick="doLogin('s')">Attempt Login</button>
+<div class="res" id="sr"></div>
+</div></div>
+</div>
+
+<div class="diff" id="diffSec">
+<div class="diff-t">Query Comparison - Same Input, Different Handling</div>
+<div class="diff-g">
+<div class="diff-c dv"><div class="diff-ch">Vulnerable Query (input becomes code)</div><div class="diff-cb" id="diffV"></div></div>
+<div class="diff-c ds"><div class="diff-ch">Secure Query (input stays data)</div><div class="diff-cb" id="diffS"></div></div>
+</div>
+</div>
+
+<div class="explain">
+<h3>How It Works</h3>
+<div class="ex-g">
+<div class="ex-b v"><h4>Vulnerable - string formatting</h4>
+<p>User input is inserted directly into the SQL string. An attacker injects SQL to change the query logic.</p>
+<div class="code"><span class="cmt"># UNSAFE - input inside query string</span>
+query = <span style="color:var(--danger)">f"SELECT * FROM users
+  WHERE username = '{username}'
+  AND password = '{password}'"</span>
+
+<span class="cmt"># With payload: ' OR '1'='1' --</span>
+<span style="color:var(--danger)">SELECT * FROM users
+  WHERE username = '' OR '1'='1' --'
+  AND password = 'anything'</span>
+
+<span class="cmt"># '1'='1' always TRUE
+# -- comments out password check
+# All rows returned - login bypassed</span></div></div>
+<div class="ex-b s"><h4>Secure - parameterized query</h4>
+<p>Input is passed as a parameter. The database treats it as data only.</p>
+<div class="code"><span class="cmt"># SAFE - ? placeholders</span>
+cursor.execute(
+  <span style="color:var(--safe)">"SELECT * FROM users
+    WHERE username = ?
+    AND password = ?"</span>,
+  (username, password)
+)
+
+<span class="cmt"># DB looks for literal username:
+# ' OR '1'='1' --
+# No such user exists
+# Login rejected</span></div></div>
+</div></div>
+</div>
+
+<footer>SQL Injection Demo - Security Analyst Assignment 3</footer>
+
+<script>
+var Q=String.fromCharCode(39);
+var INJECT=Q+" OR "+Q+"1"+Q+"="+Q+"1"+Q+" --";
+
+var DB=[
+{username:'admin',password:'Secret123',role:'admin'},
+{username:'maya_ben_ari',password:'MayaBen98!',role:'user'},
+{username:'omer4',password:'Omer_HOME1111',role:'analyst'},
+{username:'daniel.peretz',password:'DanielKing7',role:'user'},
+{username:'nina.sh',password:'NinaOffice012026',role:'manager'}
+];
+
+function fill(side,u,p){document.getElementById(side+'u').value=u;document.getElementById(side+'p').value=p;}
+
+function vulnQuery(u,p){
+var q="SELECT * FROM users WHERE username = "+Q+u+Q+" AND password = "+Q+p+Q;
+var isInject=u.indexOf("OR")!==-1||u.indexOf("--")!==-1;
+if(isInject){return{query:q,rows:DB,count:DB.length,success:true,user:DB[0],injected:true};}
+var match=DB.filter(function(r){return r.username===u&&r.password===p;});
+return{query:q,rows:match,count:match.length,success:match.length>0,user:match[0]||null,injected:false};
+}
+
+function safeQuery(u,p){
+var q="SELECT * FROM users WHERE username = ? AND password = ?\n-- Parameters: ["+esc(u)+", "+esc(p)+"]";
+var match=DB.filter(function(r){return r.username===u&&r.password===p;});
+return{query:q,rows:match,count:match.length,success:match.length>0,user:match[0]||null,injected:false};
+}
+
+function doLogin(side){
+var u=document.getElementById(side+'u').value.trim();
+var p=document.getElementById(side+'p').value;
+var el=document.getElementById(side+'r');
+if(!u){el.className='res show no-b';el.innerHTML='<div class="res-h no">&#10060; Error</div><div class="res-b"><span class="rv">Please enter a username.</span></div>';return;}
+
+var result=side==='v'?vulnQuery(u,p):safeQuery(u,p);
+var ok=result.success;
+el.className='res show '+(ok?'ok-b':'no-b');
+
+var h='<div class="res-h '+(ok?'ok':'no')+'">'+(ok?'&#9989; SUCCESS':'&#10060; FAIL')+'</div><div class="res-b">';
+if(ok&&result.user){
+h+='<div><span class="rk">Logged in as:  </span><span class="rv good">'+esc(result.user.username)+'</span></div>';
+h+='<div><span class="rk">Role:          </span><span class="rv">'+esc(result.user.role)+'</span></div>';
+}
+h+='<div><span class="rk">Rows returned: </span><span class="rv '+(result.count>1?'bad2':result.count===1?'good':'')+'">'+result.count+'</span></div>';
+if(ok){h+='<div style="margin-top:8px;font-family:var(--mono);font-size:.68rem;color:var(--accent)">Redirecting to dashboard...</div>';}
+h+='<div class="ql">Executed query</div><div class="qbox" id="qb-'+side+'"></div></div>';
+el.innerHTML=h;
+
+typeQ(document.getElementById('qb-'+side),result.query,result.injected);
+if(ok){setTimeout(function(){openDash(result.user);},2200);}
+}
+
+function typeQ(el,query,isInject){
+el.innerHTML='';var i=0;
+var timer=setInterval(function(){
+if(i>=query.length){clearInterval(timer);el.innerHTML=hlQ(query,isInject);return;}
+el.textContent+=query.charAt(i);i++;
+},10);
+}
+
+function hlQ(raw,isInject){
+var s=esc(raw);
+s=s.replace(/\b(SELECT|FROM|WHERE|AND|OR|NOT)\b/g,'<span class="kw">$1</span>');
+if(isInject){
+s=s.replace(/(&#39;\s*OR\s*&#39;1&#39;=&#39;1&#39;\s*--)/gi,'<span class="ij">$1</span>');
+if(s.indexOf('ij')===-1){
+s=s.replace(/(OR[^<]*--)/gi,'<span class="ij">$1</span>');
+}
+}
+return s;
+}
+
+function syncAttack(){
+fill('v',INJECT,'anything');
+fill('s',INJECT,'anything');
+document.getElementById('vr').className='res';document.getElementById('sr').className='res';
+setTimeout(function(){doLogin('v');},200);
+setTimeout(function(){doLogin('s');},400);
+setTimeout(function(){
+var ds=document.getElementById('diffSec');
+document.getElementById('diffV').innerHTML='<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> username = <span class="ij">&#39;&#39; <span class="kw">OR</span> &#39;1&#39;=&#39;1&#39; --</span>&#39;\n<span class="kw">AND</span> password = &#39;anything&#39;\n\n<span class="cmt">-- OR &#39;1&#39;=&#39;1&#39; is always TRUE</span>\n<span class="cmt">-- All 5 rows returned. Login bypassed.</span>';
+document.getElementById('diffS').innerHTML='<span class="kw">SELECT</span> * <span class="kw">FROM</span> users <span class="kw">WHERE</span> username = <span class="sv">?</span> <span class="kw">AND</span> password = <span class="sv">?</span>\n\n<span class="cmt">-- Parameters: ["&#39; OR &#39;1&#39;=&#39;1&#39; --", "anything"]</span>\n<span class="cmt">-- DB searches for literal string match</span>\n<span class="cmt">-- No user found. Login rejected.</span>';
+ds.className='diff show';
+ds.scrollIntoView({behavior:'smooth',block:'nearest'});
+},1500);
+}
+
+function openDash(user){
+document.getElementById('dUser').textContent=user.username;
+document.getElementById('dRole').textContent=user.role.toUpperCase();
+var d=new Date();document.getElementById('dSess').textContent='Session: '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+' | IP: 10.0.1.42 | Status: Active';
+document.getElementById('dashOv').className='dash-overlay show';
+}
+
+function closeDash(){document.getElementById('dashOv').className='dash-overlay';}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');}
+
+document.querySelectorAll('input[type="password"]').forEach(function(el){
+el.addEventListener('keydown',function(e){if(e.key==='Enter'){var s=el.id.charAt(0);doLogin(s);}});});
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+From: no-reply@drive-share-notify.com
+To: user@company.com
+Subject: Quick reminder - shared file
+
+Hi,
+
+Just a quick reminder - I shared a file with you and it still shows as pending access.
+If you have a minute, please review it today so it does not expire.
+
+File: Q1 Budget Review
+Open: https://drive-share-notify-support.xyz/q1-budget
+
+Thanks,
+Finance Team
