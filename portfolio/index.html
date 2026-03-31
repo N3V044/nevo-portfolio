@@ -180,7 +180,7 @@
 
         <div class="project-card fade-in">
           <h3 class="card-title">Operation Wakanda</h3>
-          <p class="card-desc">Red team simulation,<br>7 branching paths</p>
+          <p class="card-desc">Red team simulation, 7 branching paths</p>
           <div class="card-tags">
             <span class="card-tag" style="color:#f59e0b;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25)">Red Team</span>
             <span class="card-tag" style="color:#f59e0b;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25)">OSINT</span>
@@ -192,13 +192,13 @@
           </a>
         </div>
 
-        <div class="project-card fade-in">
+        <div class="project-card fade-in" id="phishguard-card">
           <h3 class="card-title">PhishGuard</h3>
           <p class="card-desc">Phishing detector with visual score gauge</p>
           <div class="card-tags">
             <span class="card-tag" style="color:#10b981;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25)">Python</span>
-            <span class="card-tag" style="color:#10b981;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25)">Phishing Detection</span>
             <span class="card-tag" style="color:#10b981;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25)">Rule-Based</span>
+            <span class="card-tag" style="color:#10b981;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25)">Phishing Detection</span>
           </div>
           <a href="phishguard.html" class="card-btn" style="color:#10b981;border:1px solid rgba(16,185,129,0.35);background:rgba(16,185,129,0.06)">
             View Project
@@ -230,7 +230,7 @@
     <div class="container" style="text-align:center">
       <p class="section-label fade-in">Contact</p>
       <h2 class="section-title fade-in">Get In Touch</h2>
-      <p class="section-subtitle fade-in">Open to Security Analyst, Threat Detection, Incident Response, and Cloud Security opportunities</p>
+      <p class="section-subtitle contact-subtitle fade-in">Open to Security Analyst, Threat Detection,<br class="mob-br"> Incident Response, and Cloud Security opportunities</p>
       <div class="contact-buttons fade-in">
         <a href="https://github.com/N3V044" target="_blank" rel="noopener" class="contact-btn contact-github">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
@@ -344,7 +344,7 @@ document.addEventListener('mousemove', function(e) {
       i++;
       setTimeout(type, 90);
     } else {
-      setTimeout(function() { cursor.classList.add('hidden'); }, 1500);
+      setTimeout(function() { cursor.classList.add('hidden'); }, 0);
     }
   }
   setTimeout(type, 600);
@@ -440,22 +440,34 @@ document.addEventListener('mousemove', function(e) {
     ctx.strokeStyle = 'rgba(59, 130, 246, 0.6)';
     ctx.lineWidth = 2;
     ctx.stroke();
-    // dots
-    for (let i = 0; i < n; i++) {
-      const a = angleFor(i);
-      const r = maxR * skills[i].value * progress;
-      const x = cx + Math.cos(a) * r;
-      const y = cy + Math.sin(a) * r;
+    // dots - color + size interpolated by value
+    var rawValues = skills.map(function(s) { return s.value; });
+    var minVal = Math.min.apply(null, rawValues);
+    var maxVal = Math.max.apply(null, rawValues);
+    skills.forEach(function(skill, i) {
+      var angle = (Math.PI * 2 * i) / skills.length - Math.PI / 2;
+      var r = skill.value * progress * maxR;
+      var x = cx + r * Math.cos(angle);
+      var y = cy + r * Math.sin(angle);
+      var t = (skill.value * progress - minVal * progress) / ((maxVal - minVal) * progress || 1);
+      t = Math.max(0, Math.min(1, t));
+      var rC = Math.round(40 + t * (59 - 40));
+      var gC = Math.round(90 + t * (130 - 90));
+      var bC = Math.round(180 + t * (246 - 180));
+      var dotColor = 'rgb(' + rC + ',' + gC + ',' + bC + ')';
+      var glowColor = 'rgba(' + rC + ',' + gC + ',' + bC + ',0.3)';
+      var dotSize = 4.5 + t * 1.5;
+      var glowSize = dotSize + 3;
       ctx.beginPath();
-      ctx.arc(x, y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#3b82f6';
+      ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+      ctx.fillStyle = dotColor;
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(x, y, 6, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(59,130,246,0.3)';
-      ctx.lineWidth = 1;
+      ctx.arc(x, y, glowSize, 0, Math.PI * 2);
+      ctx.strokeStyle = glowColor;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
-    }
+    });
     // labels (multiline support)
     ctx.font = '11px "JetBrains Mono", monospace';
     ctx.fillStyle = '#8c90a4';

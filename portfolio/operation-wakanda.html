@@ -47,7 +47,7 @@
   <section class="proj-hero-section">
     <div class="container">
       <div class="proj-grid">
-        <div class="proj-left fade-in">
+        <div class="proj-left">
           <span class="proj-badge">Branching Red Team Experience</span>
           <h1 class="project-title">Operation Wakanda</h1>
           <p class="proj-desc">Interactive cloud attack simulation with a game-like structure,<span class="mob-br"><br></span> where you choose between two distinct operatives,<span class="mob-br"><br></span> each with a different mindset and mission approach</p>
@@ -58,7 +58,7 @@
             <span class="proj-tag">Branching Simulation</span>
           </div>
         </div>
-        <div class="proj-right fade-in">
+        <div class="proj-right">
           <div class="proj-hl-border">
             <span class="proj-hl-title">KEY HIGHLIGHTS</span>
             <ul class="proj-hl-list">
@@ -137,7 +137,74 @@ if(window.location.hash) window.location.hash='';
 })();
 (function(){var c=document.getElementById('particle-canvas'),x=c.getContext('2d'),p=[];function r(){c.width=window.innerWidth;c.height=window.innerHeight}r();window.addEventListener('resize',r);function P(){this.x=Math.random()*c.width;this.y=Math.random()*c.height;this.vx=(Math.random()-0.5)*0.5;this.vy=(Math.random()-0.5)*0.5;this.radius=Math.random()*2+1}P.prototype.update=function(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>c.width)this.vx*=-1;if(this.y<0||this.y>c.height)this.vy*=-1};P.prototype.draw=function(){x.beginPath();x.arc(this.x,this.y,this.radius,0,Math.PI*2);x.fillStyle='rgba(59,130,246,0.5)';x.fill()};for(var i=0;i<80;i++)p.push(new P());function a(){x.clearRect(0,0,c.width,c.height);p.forEach(function(q){q.update();q.draw()});for(var i=0;i<p.length;i++)for(var j=i+1;j<p.length;j++){var dx=p[i].x-p[j].x,dy=p[i].y-p[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<150){x.beginPath();x.moveTo(p[i].x,p[i].y);x.lineTo(p[j].x,p[j].y);x.strokeStyle='rgba(59,130,246,'+(1-d/150)*0.15+')';x.lineWidth=0.5;x.stroke()}}requestAnimationFrame(a)}a()})();
 document.addEventListener('mousemove',function(e){var g=document.getElementById('cursorGlow');g.style.left=e.clientX+'px';g.style.top=e.clientY+'px'});
-(function(){var o=new IntersectionObserver(function(e){e.forEach(function(en){if(en.isIntersecting)en.target.classList.add('visible')})},{threshold:0.1});document.querySelectorAll('.fade-in').forEach(function(el){o.observe(el)})})();
+(function() {
+  var isMobile = window.innerWidth <= 768 || document.documentElement.clientWidth <= 768;
+
+  var targets = document.querySelectorAll('.demo-section');
+  if (isMobile) {
+    targets = document.querySelectorAll('.proj-right, .demo-section');
+  }
+
+  // Apply initial hidden state immediately before observer starts
+  targets.forEach(function(el) {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(30px)';
+    el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+  });
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0 });
+
+  targets.forEach(function(el) {
+    observer.observe(el);
+  });
+})();
+(function() {
+  var tooltipText = 'Read each scenario carefully - your decisions branch the mission path';
+  var label = document.querySelector('.demo-label');
+  if (!label) return;
+  var tooltip = document.createElement('div');
+  tooltip.className = 'demo-tooltip';
+  tooltip.innerHTML = '<span class="demo-tooltip-label">How to Use</span><span class="demo-tooltip-text">' + tooltipText + '</span>';
+  document.body.appendChild(tooltip);
+  function positionTooltip() {
+    var rect = label.getBoundingClientRect();
+    tooltip.style.left = (rect.left + rect.width / 2 - 110) + 'px';
+    tooltip.style.top = (rect.top - tooltip.offsetHeight - 12) + 'px';
+  }
+  function showTooltip() {
+    positionTooltip();
+    tooltip.classList.add('visible');
+  }
+  function hideTooltip() {
+    tooltip.classList.remove('visible');
+  }
+  var isMobile = window.innerWidth <= 768 || document.documentElement.clientWidth <= 768;
+  if (isMobile) {
+    var timer;
+    label.addEventListener('click', function() {
+      if (tooltip.classList.contains('visible')) {
+        hideTooltip();
+        clearTimeout(timer);
+      } else {
+        showTooltip();
+        timer = setTimeout(hideTooltip, 2000);
+      }
+    });
+  } else {
+    label.addEventListener('mouseenter', showTooltip);
+    label.addEventListener('mouseleave', hideTooltip);
+    window.addEventListener('scroll', positionTooltip, true);
+    window.addEventListener('resize', positionTooltip);
+  }
+})();
 </script>
 
 <script>

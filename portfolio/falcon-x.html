@@ -47,7 +47,7 @@
   <section class="proj-hero-section">
     <div class="container">
       <div class="proj-grid">
-        <div class="proj-left fade-in">
+        <div class="proj-left">
           <span class="proj-badge">B.Sc. Final Project - Grade 98/100</span>
           <h1 class="project-title">Falcon X SIEM</h1>
           <p class="proj-desc">Next-generation SIEM platform built to centralize security visibility, correlate alerts across multiple sources, and support investigation, response, and analytics workflows</p>
@@ -58,7 +58,7 @@
             <span class="proj-tag">IAM</span>
           </div>
         </div>
-        <div class="proj-right fade-in">
+        <div class="proj-right">
           <div class="proj-hl-border">
             <span class="proj-hl-title">KEY HIGHLIGHTS</span>
             <ul class="proj-hl-list">
@@ -92,7 +92,74 @@
 /* Cursor Glow */
 document.addEventListener('mousemove',function(e){var g=document.getElementById('cursorGlow');g.style.left=e.clientX+'px';g.style.top=e.clientY+'px'});
 /* Scroll Fade */
-(function(){var o=new IntersectionObserver(function(e){e.forEach(function(en){if(en.isIntersecting)en.target.classList.add('visible')})},{threshold:0.1});document.querySelectorAll('.fade-in').forEach(function(el){o.observe(el)})})();
+(function() {
+  var isMobile = window.innerWidth <= 768 || document.documentElement.clientWidth <= 768;
+
+  var targets = document.querySelectorAll('.demo-section');
+  if (isMobile) {
+    targets = document.querySelectorAll('.proj-right, .demo-section');
+  }
+
+  // Apply initial hidden state immediately before observer starts
+  targets.forEach(function(el) {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(30px)';
+    el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+  });
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0 });
+
+  targets.forEach(function(el) {
+    observer.observe(el);
+  });
+})();
+(function() {
+  var tooltipText = 'Navigate the tabs to investigate threats and trigger playbooks';
+  var label = document.querySelector('.demo-label');
+  if (!label) return;
+  var tooltip = document.createElement('div');
+  tooltip.className = 'demo-tooltip';
+  tooltip.innerHTML = '<span class="demo-tooltip-label">How to Use</span><span class="demo-tooltip-text">' + tooltipText + '</span>';
+  document.body.appendChild(tooltip);
+  function positionTooltip() {
+    var rect = label.getBoundingClientRect();
+    tooltip.style.left = (rect.left + rect.width / 2 - 110) + 'px';
+    tooltip.style.top = (rect.top - tooltip.offsetHeight - 12) + 'px';
+  }
+  function showTooltip() {
+    positionTooltip();
+    tooltip.classList.add('visible');
+  }
+  function hideTooltip() {
+    tooltip.classList.remove('visible');
+  }
+  var isMobile = window.innerWidth <= 768 || document.documentElement.clientWidth <= 768;
+  if (isMobile) {
+    var timer;
+    label.addEventListener('click', function() {
+      if (tooltip.classList.contains('visible')) {
+        hideTooltip();
+        clearTimeout(timer);
+      } else {
+        showTooltip();
+        timer = setTimeout(hideTooltip, 2000);
+      }
+    });
+  } else {
+    label.addEventListener('mouseenter', showTooltip);
+    label.addEventListener('mouseleave', hideTooltip);
+    window.addEventListener('scroll', positionTooltip, true);
+    window.addEventListener('resize', positionTooltip);
+  }
+})();
 </script>
 
 <script>

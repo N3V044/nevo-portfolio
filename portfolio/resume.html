@@ -78,6 +78,7 @@
     }
     .resume-download {
       background: var(--bl);
+      border: none;
       color: #fff;
       padding: 12px 28px;
       border-radius: 8px;
@@ -91,10 +92,14 @@
       transform: translateY(-2px);
       color: #fff;
       opacity: 1;
+      background: var(--bl);
     }
     .resume-download:active {
       transform: scale(0.97);
       transition: all 0.15s ease;
+    }
+    .resume-open-mobile {
+      display: none;
     }
     .resume-viewer {
       width: 100%;
@@ -161,6 +166,7 @@
         Download CV
       </a>
     </div>
+    <a href="nevo-ben-ami-cv.pdf" target="_blank" class="resume-open-mobile">Open CV</a>
     <div class="resume-viewer">
       <iframe src="nevo-ben-ami-cv.pdf" class="pdf-frame" title="Nevo Ben Ami CV"></iframe>
     </div>
